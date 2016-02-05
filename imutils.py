@@ -7,6 +7,7 @@ from sys import exc_info
 from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.image import AxesImage
+from scipy.spatial import ConvexHull
 
 def imread(path):
     '''Reads in and returns an image from a defined path'''
@@ -20,6 +21,7 @@ def imread(path):
     return image
 
 class ImageClicker(object):
+    '''Class for clickable images'''
 
     def __init__(self, image, clicklim):
         self.image = image
@@ -29,20 +31,24 @@ class ImageClicker(object):
 
         fig = plt.figure()
         fig.canvas.set_window_title('Click (X,Y) Coordinates')
-        ax = plt.axes([0,0,1,1]) 
+        plt.axes([0,0,1,1]) 
         plt.imshow(image, picker=True)
-        plt.axis('off')
-
+        plt.axis('image')
+        
         self.bid = fig.canvas.mpl_connect('pick_event', self.on_pick)
 
         plt.show()
-
+         
 
     def on_pick(self,event):
         artist = event.artist
         if isinstance(artist, AxesImage):
             mouseevent = event.mouseevent
-            self.coords[self.nclicks] = (mouseevent.xdata, mouseevent.ydata)
+            x = int(mouseevent.xdata)
+            y = int(mouseevent.ydata)
+            self.coords[self.nclicks] = (x, y)
+            plt.plot(x,y,color=(0,1,0,1), marker='+')
+            plt.draw()
             print "Coordinate %d: %s" % (self.nclicks, self.coords[self.nclicks])
 
             if self.nclicks < (self.clicklim - 1):
@@ -52,9 +58,18 @@ class ImageClicker(object):
                 plt.disconnect(self.bid)
 
 
+def fitrect(points):
+    '''Finds the minimum bounding rectangle'''
+
+    #determine convex hull of points
+    hull = ConvexHull(points)
+
+    #determine edge orientation
+
+ 
 # Testing
 if __name__ == "__main__":
     image = imread('/Users/blair/Desktop/bee/Photos/IMG_0324.JPG')
     clickim = ImageClicker(image, 4)
 
-    print "end"
+    print clickim.coords
