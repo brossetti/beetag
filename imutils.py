@@ -64,8 +64,14 @@ def fitrect(points):
     #determine convex hull of points
     hull = ConvexHull(points)
 
-    #determine edge orientation
+    #determine unit edge direction
+    vects = np.difF(x + [x[0]], axis=0)
+    norms = np.linalg.norm(vects, axis=1)
+    uvects = np.dot(np.diag(1/norms),vects)
+    nvects = np.fliplr(uvects)*(-1,1)
 
+    #find MBR
+    
  
 # Testing
 if __name__ == "__main__":
