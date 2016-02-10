@@ -3,29 +3,15 @@ Image Utilities
 
 A collection of functions for handling and annotating images
 """
-import pdb
 import numpy as np
-from sys import exc_info
 from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.image import AxesImage
+from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
-from skimage import transform as tf
-
-
-def imread(path):
-    '''Reads in and returns an image from a defined path'''
-
-    try: 
-        image = Image.open(path)
-    except IOError as e:
-	print "I/O error({0}): {1}".format(e.errno, e.strerror)
-        raise
-
-    return image
 
 class ImageClicker(object):
-    '''Class for clickable images'''
+    """Class for clickable images"""
 
     def __init__(self, image, clicklim):
         self.image = image
@@ -33,16 +19,15 @@ class ImageClicker(object):
         self.nclicks = 0
         self.coords = [None]*clicklim
 
-        fig = plt.figure()
-        fig.canvas.set_window_title('Click (X,Y) Coordinates')
-        plt.axes([0,0,1,1]) 
+        self.fig = plt.figure()
+        self.fig.canvas.set_window_title('Click (X,Y) Coordinates')
+        plt.axes([0,0,1,1])
         plt.imshow(image, picker=True)
         plt.axis('image')
-        
-        self.bid = fig.canvas.mpl_connect('pick_event', self.on_pick)
-        
+
+        self.bid = self.fig.canvas.mpl_connect('pick_event', self.on_pick)
+
         plt.show()
-         
 
     def on_pick(self,event):
         artist = event.artist
@@ -60,11 +45,14 @@ class ImageClicker(object):
             else:
                 print "disconnecting console coordinate printout..."
                 plt.disconnect(self.bid)
-                plt.close()
+                self.bbox = fitrect(self.coords)
+                p = Polygon(self.bbox, facecolor=(0,0,1,0.25), edgecolor=(1,0,0,0.75))
+                plt.gca().add_artist(p)
+                plt.draw()
 
 
 def fitrect(points):
-    '''Finds the minimum bounding rectangle'''
+    """Finds the minimum bounding rectangle"""
     #determine convex hull of points
     hull = ConvexHull(points)
     pts = hull.points[hull.vertices]
@@ -76,7 +64,7 @@ def fitrect(points):
     nvects = np.fliplr(uvects)*(-1,1)
 
     #find MBR
-    minmax = lambda x: np.vstack((x.min(axis=0),x.max(axis=0)))
+    def minmax(x): return np.vstack((x.min(axis=0),x.max(axis=0)))
     x = minmax(np.dot(pts, np.transpose(uvects)))
     y = minmax(np.dot(pts, np.transpose(nvects)))
 
@@ -86,32 +74,54 @@ def fitrect(points):
     #define the rectangle
     xys = np.column_stack((x[[0,1,1,0,0],idx], y[[0,0,1,1,0],idx]))
     rect  = np.dot(xys, np.vstack((uvects[idx,:],nvects[idx,:])))
- 
-    return rect.astype(int) 
+
+    return rect.astype(int)
+
+
+def read(path):
+    """Reads in and returns an image from a defined path"""
+
+    try: 
+        image = Image.open(path)
+    except IOError as e:
+        print "I/O error({0}): {1}".format(e.errno, e.strerror)
+        raise
+
+    return image
+
+
+def write(image, path):
+    """Writes an image to a file at the defined path"""
+
+    try:
+        image.save(path)
+    except IOError as e:
+        print "I/O error({0}): {1}".format(e.errno, e.strerror)
+        raise
 
 
 def rotocrop(image, rect):
-    '''Crops rotated rectangles from an image'''
+    """Crops rotated rectangles from an image"""
     #reorder vertice based on location
-    rect = rect[0:4,:]
-    idx = np.argsort(rect[:,1])
+    pts = rect[0:4,:]
+    idx = np.argsort(pts[:,1])
     idx[2], idx[3] = idx[3], idx[2]
-    rect = rect[idx,:]
+    pts = pts[idx,:]
 
     #determine width and height
-    vects = np.diff(rect[0:3,:], axis=0)
+    vects = np.diff(pts[0:3,:], axis=0)
     norms = np.linalg.norm(vects, axis=1)
 
     #determine rotation and (w,h)
     angle = np.arctan2(vects[0,1],vects[0,0]) * 180 / np.pi
     if angle > 90:
-        angle = angle - 180  
+        angle -= 180
 
     #extract major bounding box
-    left = np.min(rect[:,0])
-    upper = np.min(rect[:,1])
-    right =  np.max(rect[:,0])
-    lower =  np.max(rect[:,1])
+    left = np.min(pts[:,0])
+    upper = np.min(pts[:,1])
+    right = np.max(pts[:,0])
+    lower = np.max(pts[:,1])
     bbox = image.crop((left, upper, right, lower))
 
     #rotate and recrop
@@ -130,31 +140,17 @@ def rotocrop(image, rect):
     region = region.crop((left, upper, right, lower))
 
     return region
-   
- 
+
+
 # Testing
 if __name__ == "__main__":
     from matplotlib.patches import Polygon
-    
-    image = imread('/Users/blair/Desktop/bee/Photos/IMG_0324.JPG')
+
+    image = read('/Users/blair/Desktop/bee/Photos/IMG_0324.JPG')
     clickim = ImageClicker(image, 4)
-
-    print clickim.coords
-
-    rect = fitrect(clickim.coords)
-
-    print(rect)
-
-    fig = plt.figure()
-    fig.canvas.set_window_title('Results')
-    plt.axes([0,0,1,1])
-    plt.imshow(clickim.image)
-    plt.axis('image')
-
-    p = Polygon(rect, alpha=0.4)
-    plt.gca().add_artist(p)    
-    plt.show()
 
     region = rotocrop(image, rect)
 
     region.show()
+
+    print "done"
