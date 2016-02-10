@@ -10,6 +10,7 @@ from matplotlib.image import AxesImage
 from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
 
+
 class ImageClicker(object):
     """Class for clickable images"""
 
