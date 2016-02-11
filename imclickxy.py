@@ -6,6 +6,7 @@ Allows a user to extract rectangular regions from an image
 import argparse
 from os import listdir
 from os.path import isfile, join, splitext
+from sys import exit
 import matplotlib.pyplot as plt
 import imutils as im
 
@@ -45,7 +46,7 @@ for imfile in imfiles:
 
         #prompt user for action
         try:
-            flag = raw_input('Enter s (save), r (retry), or sr(save and retry): ')
+            flag = raw_input('Enter s (save), r (retry), sr (save and retry), q (quit), or sq (save and quit): ')
         except TypeError:
             print "Invalid command..."
             continue
@@ -75,6 +76,15 @@ for imfile in imfiles:
             plt.ioff()
             plt.close()
             continue
+        elif flag == 'q':
+            plt.ioff()
+            plt.close()
+            exit("Quit")
+        elif flag == 'sq':
+            im.write(region, fulloutpath)
+            plt.ioff()
+            plt.close()
+            exit("Quit")
         else:
             continue
 

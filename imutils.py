@@ -103,8 +103,20 @@ def write(image, path):
 
 def rotocrop(image, rect):
     """Crops rotated rectangles from an image"""
-    #reorder vertice based on location
+    #remove duplicate row
     pts = rect[0:4,:]
+
+    #check if rect is level
+    if len(np.unique(pts[:,0])) == 2:
+        left = np.min(pts[:,0])
+        upper = np.min(pts[:,1])
+        right = np.max(pts[:,0])
+        lower = np.max(pts[:,1])
+        region = image.crop((left, upper, right, lower))
+
+        return region
+
+    #reorder vertice based on location
     idx = np.argsort(pts[:,1])
     idx[2], idx[3] = idx[3], idx[2]
     pts = pts[idx,:]
