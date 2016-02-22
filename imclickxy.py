@@ -5,7 +5,7 @@ Allows a user to extract rectangular regions from an image
 """
 import argparse
 from os import listdir
-from os.path import isfile, join, splitext
+from os.path import abspath, isfile, join, splitext
 from sys import exit
 import matplotlib.pyplot as plt
 import imutils as im
@@ -17,11 +17,11 @@ parser.add_argument("outpath", type=str, help="path to output file directory")
 args = parser.parse_args()
 
 # Set impath and outpath
-impath = args.impath
-outpath = args.outpath
+impath = abspath(args.impath)
+outpath = abspath(args.outpath)
 
 # Get image file list
-imfiles = [f for f in listdir(impath) if isfile(join(impath, f))]
+imfiles = [f for f in listdir(impath) if (isfile(join(impath, f)) and not f.startswith('.'))]
 
 # Loop through image files
 for imfile in imfiles:
