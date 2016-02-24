@@ -14,11 +14,11 @@ from scipy.spatial import ConvexHull
 class ImageClicker(object):
     """Class for clickable images"""
 
-    def __init__(self, image, clicklim):
+    def __init__(self, image, click_lim):
         self.image = image
-        self.clicklim = clicklim
+        self.click_lim = click_lim
         self.nclicks = 0
-        self.coords = [None]*clicklim
+        self.coords = [None]*click_lim
 
         self.fig = plt.figure()
         self.fig.canvas.set_window_title("Click (X,Y) Coordinates")
@@ -33,15 +33,15 @@ class ImageClicker(object):
     def on_pick(self,event):
         artist = event.artist
         if isinstance(artist, AxesImage):
-            mouseevent = event.mouseevent
-            x = int(mouseevent.xdata)
-            y = int(mouseevent.ydata)
+            mouse_event = event.mouseevent
+            x = int(mouse_event.xdata)
+            y = int(mouse_event.ydata)
             self.coords[self.nclicks] = (x, y)
             plt.plot(x,y,color=(0,1,0,1), marker='+')
             plt.draw()
             print "Coordinate %d: %s" % (self.nclicks, self.coords[self.nclicks])
 
-            if self.nclicks < (self.clicklim - 1):
+            if self.nclicks < (self.click_lim - 1):
                 self.nclicks += 1
             else:
                 print "disconnecting console coordinate printout..."
@@ -82,16 +82,19 @@ def fitrect(points):
     return rect.astype(int)
 
 
-def read(path):
-    """Reads in and returns an image from a defined path"""
+def read(path, asarray=False):
+    """Reads in and returns an image from a defined path
+    :param path:
+    :param asarray:
+    :return:
+    """
 
-    try: 
-        image = Image.open(path)
-    except IOError as e:
-        print "I/O error({0}): {1}".format(e.errno, e.strerror)
-        raise
+    image = Image.open(path)
 
-    return image
+    if asarray:
+        return np.array(image)
+    else:
+        return image
 
 
 def rotocrop(image, rect):
@@ -156,17 +159,3 @@ def write(image, path):
     except IOError as e:
         print "I/O error({0}): {1}".format(e.errno, e.strerror)
         raise
-
-
-# Testing
-if __name__ == "__main__":
-    from matplotlib.patches import Polygon
-
-    image = read('/Users/blair/Desktop/bee/Photos/IMG_0324.JPG')
-    clickim = ImageClicker(image, 4)
-
-    region = rotocrop(image, rect)
-
-    region.show()
-
-    print "done"
