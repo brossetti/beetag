@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import imutils as im
 
 
-parser = argparse.ArgumentParser(description='Image Click XY')
-parser.add_argument("impath", type=str, help="path to image file directory")
-parser.add_argument("outpath", type=str, help="path to output file directory")
+parser = argparse.ArgumentParser(description="Image Click XY")
+parser.add_argument('impath', type=str, help="path to image file directory")
+parser.add_argument('outpath', type=str, help="path to output file directory")
 args = parser.parse_args()
 
 # Set impath and outpath
@@ -26,32 +26,32 @@ imfiles = [f for f in listdir(impath) if (isfile(join(impath, f)) and not f.star
 # Loop through image files
 for imfile in imfiles:
 
-    #read image
+    # read image
     image = im.read(join(impath, imfile))
 
-    #begin program
+    # begin program
     while True:
 
-        #initialize interactive image
+        # initialize interactive image
         clickim = im.ImageClicker(image, 4)
 
-        #extract region
+        # extract region
         rect = im.fitrect(clickim.coords)
         region = im.rotocrop(image, rect)
 
-        #display region
+        # display region
         plt.imshow(region)
         plt.ion()
         plt.show()
 
-        #prompt user for action
+        # prompt user for action
         try:
-            flag = raw_input('Enter s (save), r (retry), sr (save and retry), q (quit), or sq (save and quit): ')
+            flag = raw_input("Enter s (save), r (retry), sr (save and retry), q (quit), or sq (save and quit): ")
         except TypeError:
             print "Invalid command..."
             continue
 
-        #set filename
+        # set filename
         fnum = 1
         filename = splitext(imfile)[0]
         fulloutpath = join(outpath, filename + '_tag' + str(fnum) + '.png')
@@ -61,7 +61,7 @@ for imfile in imfiles:
             fulloutpath = join(outpath, filename + '_tag' + str(fnum) + '.png')
             fnum += 1
 
-        #perform user-defined action
+        # perform user-defined action
         if flag == 's':
             im.write(region, fulloutpath)
             plt.ioff()

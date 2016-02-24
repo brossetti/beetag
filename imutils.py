@@ -21,7 +21,7 @@ class ImageClicker(object):
         self.coords = [None]*clicklim
 
         self.fig = plt.figure()
-        self.fig.canvas.set_window_title('Click (X,Y) Coordinates')
+        self.fig.canvas.set_window_title("Click (X,Y) Coordinates")
         plt.axes([0,0,1,1])
         plt.imshow(image, picker=True)
         plt.axis('image')
@@ -53,18 +53,21 @@ class ImageClicker(object):
 
 
 def fitrect(points):
-    """Finds the minimum bounding rectangle"""
-    #determine convex hull of points
+    """ Finds the minimum bounding rectangle
+    :param points:  matrix of point coordinates
+    :return: numpy matrix of rectangle coordinates
+    """
+    # determine convex hull of points
     hull = ConvexHull(points)
     pts = hull.points[hull.vertices]
 
-    #determine unit edge direction
+    # determine unit edge direction
     vects = np.diff(np.vstack((pts, pts[0])), axis=0)
     norms = np.linalg.norm(vects, axis=1)
     uvects = np.dot(np.diag(1/norms),vects)
     nvects = np.fliplr(uvects)*(-1,1)
 
-    #find MBR
+    # find MBR
     def minmax(x): return np.vstack((x.min(axis=0),x.max(axis=0)))
     x = minmax(np.dot(pts, np.transpose(uvects)))
     y = minmax(np.dot(pts, np.transpose(nvects)))
@@ -72,7 +75,7 @@ def fitrect(points):
     areas = (y[0,:]-y[1,:])*(x[0,:]-x[1,:])
     idx = np.argmin(areas)
 
-    #define the rectangle
+    # define the rectangle
     xys = np.column_stack((x[[0,1,1,0,0],idx], y[[0,0,1,1,0],idx]))
     rect  = np.dot(xys, np.vstack((uvects[idx,:],nvects[idx,:])))
 
@@ -91,22 +94,12 @@ def read(path):
     return image
 
 
-def write(image, path):
-    """Writes an image to a file at the defined path"""
-
-    try:
-        image.save(path)
-    except IOError as e:
-        print "I/O error({0}): {1}".format(e.errno, e.strerror)
-        raise
-
-
 def rotocrop(image, rect):
     """Crops rotated rectangles from an image"""
-    #remove duplicate row
+    # remove duplicate row
     pts = rect[0:4,:]
 
-    #check if rect is level
+    # check if rect is level
     if len(np.unique(pts[:,0])) == 2:
         left = np.min(pts[:,0])
         upper = np.min(pts[:,1])
@@ -116,31 +109,31 @@ def rotocrop(image, rect):
 
         return region
 
-    #reorder vertice based on location
+    # reorder vertices based on location
     idx = np.argsort(pts[:,1])
     idx[2], idx[3] = idx[3], idx[2]
     pts = pts[idx,:]
 
-    #determine width and height
+    # determine width and height
     vects = np.diff(pts[0:3,:], axis=0)
     norms = np.linalg.norm(vects, axis=1)
 
-    #determine rotation and (w,h)
+    # determine rotation and (w,h)
     angle = np.arctan2(vects[0,1],vects[0,0]) * 180 / np.pi
     if angle > 90:
         angle -= 180
 
-    #extract major bounding box
+    # extract major bounding box
     left = np.min(pts[:,0])
     upper = np.min(pts[:,1])
     right = np.max(pts[:,0])
     lower = np.max(pts[:,1])
     bbox = image.crop((left, upper, right, lower))
 
-    #rotate and recrop
+    # rotate and recrop
     region = bbox.rotate(angle,expand=True)
    
-    #final crop
+    # final crop
     rwh = region.size
     if np.argmin(rwh) != np.argmin(norms):
         norms = norms[::-1].astype(int)
@@ -153,6 +146,16 @@ def rotocrop(image, rect):
     region = region.crop((left, upper, right, lower))
 
     return region
+
+
+def write(image, path):
+    """Writes an image to a file at the defined path"""
+
+    try:
+        image.save(path)
+    except IOError as e:
+        print "I/O error({0}): {1}".format(e.errno, e.strerror)
+        raise
 
 
 # Testing
