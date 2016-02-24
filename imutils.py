@@ -4,6 +4,7 @@ Image Utilities
 A collection of functions for handling and annotating images
 """
 import numpy as np
+import cv2
 from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.image import AxesImage
@@ -150,6 +151,19 @@ def rotocrop(image, rect):
 
     return region
 
+def show(image, title="image"):
+    """ Displays a PIL or opencv2 image
+    :param image: PIL or opencv2 image
+    :param title: window title
+    :return:
+    """
+
+    if type(image).__module__ == np.__name__:
+        cv2.imshow(title, image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    else:
+        image.imshow(title)
 
 def write(image, path):
     """Writes an image to a file at the defined path"""

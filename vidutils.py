@@ -7,83 +7,77 @@ import numpy as np
 import cv2
 
 
-def read(path, start, stop, rgb):
+def read(path, start=0, stop=0, gray=True):
     """ Reads in a video file and returns contents from start to stop
     :param path: relative or absolute path to video file
     :param start: start time from beginning of video in seconds
     :param stop: stop time from end of video in seconds
-    :param rgb: is video RGB
-    :return: video dictionary
+    :param gray: return grayscale
+    :return: numpy matrix of video data and dictionary containing video information
     """
 
     # initialize video dictionary
-    video = {'Name': path}
+    vidinfo = {'Name': path}
 
     # open video file and extract frames
-    #try:
     cap = cv2.VideoCapture(path)
-    video['Width'] = int(cap.get(3))
-    video['Height'] = int(cap.get(4))
-    video['FPS'] = cap.get(5)
-    video['NFrames'] = int(cap.get(7))
+    vidinfo['Width'] = int(cap.get(3))
+    vidinfo['Height'] = int(cap.get(4))
+    vidinfo['FPS'] = cap.get(5)
+    frame_count = int(cap.get(7))
 
-    startIdx = int(start*video['FPS'])
-    stopIdx = int(video['NFrames']-stop*video['FPS']-1)
+    start_idx = int(start * vidinfo['FPS'])
+    stop_idx = int(frame_count - stop * vidinfo['FPS'] - 1)
 
     # trim start
-    for i in range(startIdx):
+    for i in range(start_idx):
         cap.grab()
 
-    # get frames until stop or end
-    if rgb:
-        video['Data'] = np.zeros((video['Height'], video['Width'], 3, stopIdx-startIdx+1))
+    # read first frame to get video information
+    ret, frame = cap.read()
+    vidinfo['Type'] = frame.dtype
+    vidinfo['Gray'] = gray
 
-        for i in range(stopIdx):
-            # Capture frame-by-frame
-            ret, video['Data'][:,:,:,i] = cap.read()
-
-            if not ret:
-                break
+    # initialize matrix for rgb or gray
+    if gray:
+        vidmat = np.zeros((vidinfo['Height'], vidinfo['Width'], stop_idx-start_idx+1), dtype=vidinfo['Type'])
     else:
-        video['Data'] = np.zeros((video['Height'], video['Width'], stopIdx-startIdx+1))
+        vidmat = np.zeros((vidinfo['Height'], vidinfo['Width'], stop_idx-start_idx+1, 3), dtype=vidinfo['Type'])
 
-        for i in range(stopIdx):
-            # Capture frame-by-frame
-            ret, video['Data'][:,:,i] = cap.read()
+    # get frames until stop or end
+    for i in range(1, stop_idx-start_idx+1):
+
+        # read gray or rgb
+        if  gray:
+            ret, frame = cap.read()
+            vidmat[:, :, i] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
             if not ret:
                 break
+        else:
+            ret, vidmat[:, :, i] = cap.read()
 
-    #except IOError as e:
-    #    print "I/O error({0}): {1}".format(e.errno, e.strerror)
-    #    raise
-
-    cap.release()
-
-    return video
-
-
-def var(path, start, stop):
-    """
-    :param path: relative or absolute path to video file
-    :param start: start time of video in seconds
-    :param stop: stop time of video in seconds
-    :return: 3-dimensional matrix of video data
-    """
-
-    while(True):
-        # Capture frame-by-frame
-        ret, frame = cap.read()
-
-        # Our operations on the frame come here
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        # Display the resulting frame
-        cv2.imshow('frame',gray)
+        #display
+        cv2.imshow('frame',vidmat[:, :, i])
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # Release the capture
     cap.release()
+    cv2.destroyAllWindows()
 
-    return vidvar
+    return vidmat, vidinfo
+
+
+def active_region(video):
+    """
+    :param video: numpy matrix of video data
+    :return: 3-dimensional matrix of active video region
+    """
+
+    # calculate variance over frame dimension
+    varim = np.var(video, axis=2)
+
+    # threshold variance image
+    ret, thresh_im = cv2.threshold(varim, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    return thresh_im
