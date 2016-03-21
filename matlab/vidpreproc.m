@@ -1,4 +1,4 @@
-function [ ppvid ] = vidpreproc(vid, etime, outpath)
+function [ ppvid, background ] = vidpreproc(vid, etime, outpath)
 %VIDPREPROC Summary of this function goes here
 %   Extract the active region from a given video file and write a
 %   preprocessed video file for furthe r analysis
@@ -61,4 +61,7 @@ close(ppvid)
 
 % reset CurrentTime
 vid.CurrentTime = stime;
+
+%% Define Background Image
+background = meanImg(bbox(2):bbox(4),:,:);
 

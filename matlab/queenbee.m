@@ -15,7 +15,7 @@ etime = vid.Duration - etime;
 
 %% Preprocess Video
 disp('Preprocessing video...');
-ppvid = vidpreproc(vid, etime, path);
+[ppvid, background] = vidpreproc(vid, etime, path);
 
 %% Detect Tags
 
