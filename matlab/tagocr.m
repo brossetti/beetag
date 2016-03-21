@@ -1,8 +1,8 @@
 %% Set Parameters
 training = true;
-rootdir = '/Users/blair/Desktop/bee/tags/MVI9622/';
+rootdir = '/Users/blair/Desktop/bee/tags/MVI9621/';
 ext = '.png';
-lang = '/Users/blair/dev/matlab/beetags/training/dgt/tessdata/dgt.traineddata';
+lang = '/Users/blair/dev/beetag/matlab/training/dgt/tessdata/dgt.traineddata';
 
 %% Get Input Paths
 files = dir(fullfile(rootdir, ['*' ext]));

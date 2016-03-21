@@ -1,5 +1,5 @@
 %% Get Input Paths
-rootdir = '/Users/blair/Desktop/tags9621/';
+rootdir = '/Users/blair/Desktop/tags9622/';
 files = dir([rootdir '*.tif']);
 dirIdx = [files.isdir];
 files = {files(~dirIdx).name}';
