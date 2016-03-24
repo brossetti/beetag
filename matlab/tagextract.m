@@ -12,6 +12,11 @@ while hasFrame(vid)
     gframe = imadjust(rgb2gray(frame));
     gframebg = gframe - background ;
 
+    subplot(2,1,1)
+    imshow(frame)
+    subplot(2,1,2)
+    imshow(gframebg)
+    
     % detect MSER regions
     [mserRegions, mserConnComp] = detectMSERFeatures(gframebg,...
         'RegionAreaRange',[300 3000],'ThresholdDelta',4);
@@ -23,7 +28,7 @@ while hasFrame(vid)
             'MinorAxisLength', 'ConvexArea', 'Image');
 
         % filter regions with big holes
-        solidityIdx = [mserStats.Solidity] > 0.80;
+        solidityIdx = [mserStats.Solidity] > 0.85;
         
         % filter regions with incorrect aspect ratio
         aspect = [mserStats.MinorAxisLength]./[mserStats.MajorAxisLength];
@@ -46,39 +51,40 @@ while hasFrame(vid)
         end
         
         % calculate minimum area bounding rectangle
-%         for i = 1:length(mserRegions)
-%             % get convex hull points
-%             pts = mserStats(i).ConvexHull;
-%             
-%             % determine unit edge direction
-%             vects = diff(pts);
-%             norms = sqrt(sum(vects.^2,2));
-%             uvects = diag(1./norms)*vects;
-%             nvects = fliplr(uvects);
-%             nvects(:,1) = nvects(:,1)*-1;
-%             
-%             % find MBR
-%             minmax = @(x) [min(x,[],1); max(x,[],1)];
-%             x = minmax(pts*uvects');
-%             y = minmax(pts*nvects');
-%             
-%             areas = (y(1,:)-y(2,:)).*(x(1,:)-x(2,:));
-%             [~,idx] = min(areas);
-%             
-%             % define the rectangle
-%             x = x(:,idx);
-%             y = y(:,idx);
-%             xys = [x([0,1,1,0,0]), y([0,0,1,1,0])];
-%         end
+        for i = 1:length(mserRegions)
+            % get convex hull points
+            pts = mserStats(i).ConvexHull;
+            
+            % determine unit edge direction
+            vects = diff(pts);
+            norms = sqrt(sum(vects.^2,2));
+            uvects = diag(1./norms)*vects;
+            nvects = fliplr(uvects);
+            nvects(:,1) = nvects(:,1)*-1;
+            
+            % find MBR
+            minmax = @(x) [min(x,[],1); max(x,[],1)];
+            x = minmax(pts*uvects');
+            y = minmax(pts*nvects');
+            
+            areas = (y(1,:)-y(2,:)).*(x(1,:)-x(2,:));
+            [~,idx] = min(areas);
+            
+            % define the rectangle
+            xys = [x([1,2,2,1,1],idx), y([1,1,2,2,1],idx)];
+            rect = xys*[uvects(idx,:); nvects(idx,:)];
+            
+            % extract region
+%             tag = extractregion(frame,rect(1:end-1,:));
+            
+            hold on
+            plot(mserRegions, 'showPixelList', true,'showEllipses',false)
+            plot(rect(:,1),rect(:,2),'r');
+            hold off
+        end
     end %if
     
-    subplot(2,1,1)
-    imshow(frame)
-    subplot(2,1,2)
-    imshow(gframebg)
-    hold on
-    plot(mserRegions, 'showPixelList', true,'showEllipses',true)
-    hold off
+
     
 
 
