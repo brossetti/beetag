@@ -10,14 +10,15 @@ h = floor(dists(2));
 w = floor(dists(4));
 
 % set reference points
-refpts = [ 0,0; h,0; h,w; 0,w];
+% refpts = [ 0,0; 0,h; w,h; w,0];
+refpts = [ w, 0; w,h; 0,h; 0,0];
 
 % cycle pts to start with short edge
 if find(Idx == 1) > 2
     pts = pts([2,3,4,1],:);
 end
 
-tform = estimateGeometricTransform(pts,refpts,'similarity');
+tform = fitgeotrans(pts,refpts,'projective');
 image = imwarp(image,tform,'cubic', 'OutputView', imref2d([h, w]));
 
 end

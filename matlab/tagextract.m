@@ -12,9 +12,9 @@ while hasFrame(vid)
     gframe = imadjust(rgb2gray(frame));
     gframebg = gframe - background ;
 
-    subplot(2,1,1)
+    subplot(3,1,1)
     imshow(frame)
-    subplot(2,1,2)
+    subplot(3,1,2)
     imshow(gframebg)
     
     % detect MSER regions
@@ -75,12 +75,16 @@ while hasFrame(vid)
             rect = xys*[uvects(idx,:); nvects(idx,:)];
             
             % extract region
-%             tag = extractregion(frame,rect(1:end-1,:));
+            tag = extractregion(frame,rect(1:end-1,:));
             
+            subplot(3,1,2)
             hold on
             plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-            plot(rect(:,1),rect(:,2),'r');
+            plot(rect(:,1),rect(:,2),'r')
             hold off
+            subplot(3,1,3)
+            imshow(tag)
+            pause(0.001)
         end
     end %if
     
