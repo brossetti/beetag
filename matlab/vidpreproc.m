@@ -8,11 +8,12 @@ stime = vid.CurrentTime;
 [~,name, ~] = fileparts(vid.Name);
 
 %% Video Output
-ppvid = VideoWriter(fullfile(outpath,[name '_preprocessed.avi']),'Uncompressed AVI');
+ppvidpath = fullfile(outpath,[name '_preprocessed.avi']);
+ppvid = VideoWriter(ppvidpath,'Uncompressed AVI');
 
 %% Calcualte Active Region
 
-% calculate mean
+% calculate mean and background
 numFrames = 1;
 meanImg = double(readFrame(vid));
 
@@ -63,5 +64,9 @@ close(ppvid)
 vid.CurrentTime = stime;
 
 %% Define Background Image
-background = meanImg(bbox(2):bbox(4),:,:);
+background = uint8(meanImg (bbox(2):bbox(4),:,:));
+imwrite(background, fullfile(outpath,[name '_background.png']));
+
+%% Get Preprocessed Video Handle
+ppvid = VideoReader(ppvidpath);
 

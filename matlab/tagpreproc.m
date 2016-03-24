@@ -12,6 +12,7 @@ if plt
     subplot(row,col,1)
     imshow(imresize(img, 10, 'nearest'))
 end
+
 %% Parameters
 rbr = 5;    %rolling ball radius
 
@@ -42,8 +43,9 @@ for i = 1:c
 end
 
 %% Convert to Grayscale
-img = rgb2gray(img);
-
+if c > 1
+    img = rgb2gray(img);
+end
 %% Denoise
 % img = wiener2(img, [2 2]);
 

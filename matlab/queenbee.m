@@ -3,7 +3,8 @@ function queenbee(filepath, stime, etime)
 %   Detailed explanation goes here
 
 %% Parse Input
-[path,~,~] = fileparts(filepath);
+[path,name,~] = fileparts(filepath);
+force = false ;
 
 %% Prep Video
 
@@ -14,10 +15,22 @@ vid = VideoReader(filepath, 'CurrentTime', stime);
 etime = vid.Duration - etime;
 
 %% Preprocess Video
-disp('Preprocessing video...');
-[ppvid, background] = vidpreproc(vid, etime, path);
+ppvidpath = fullfile(path,[name '_preprocessed.avi']);
+backgroundpath = fullfile(path,[name '_background.png']);
+if exist(ppvidpath,'file') && exist(backgroundpath,'file') && ~force
+    disp('Preprocessing video and background image exist')
+    disp('Getting video handle...')
+    ppvid = VideoReader(ppvidpath);
+    
+    disp('Getting background image...')
+    background = imread(backgroundpath);
+else
+    disp('Preprocessing video...');
+    [ppvid, background] = vidpreproc(vid, etime, path);
+end
 
 %% Detect Tags
+tagfiles = tagextract(ppvid, background, path);
 
 end
 

@@ -1,6 +1,6 @@
 %% Set Parameters
 training = true;
-rootdir = '/Users/blair/Desktop/bee/tags/MVI9621/';
+rootdir = '/Users/blair/Desktop/bee/tags/TrainingFramesSelected_gray/';
 ext = '.png';
 lang = '/Users/blair/dev/beetag/matlab/training/dgt/tessdata/dgt.traineddata';
 
@@ -29,7 +29,7 @@ for i = 1:numImg
     end
     
     %preprocess
-    img = tagpreproc(img);
+    img = tagpreproc2(img);
 %     imwrite(img, fullfile('/Users/blair/Desktop/bee/tags/MVI9622clean/',[name '.tif']));
     
     %process tag and rotated tag
@@ -37,8 +37,8 @@ for i = 1:numImg
     
     for j = 1:2
         %ocr
-%         results{j}.ocr = ocr(img, 'CharacterSet', '0123456789', 'TextLayout', 'Block');
-        results{j}.ocr = ocr(img, 'Language', lang, 'TextLayout', 'Block');
+        results{j}.ocr = ocr(img, 'CharacterSet', '0123456789', 'TextLayout', 'Block');
+%         results{j}.ocr = ocr(img, 'Language', lang, 'TextLayout', 'Block');
 
         %keep at most 3 digits by confidence level
         conf = results{j}.ocr.CharacterConfidences;
