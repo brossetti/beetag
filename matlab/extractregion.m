@@ -18,8 +18,8 @@ if find(Idx == 1) > 2
     pts = pts([2,3,4,1],:);
 end
 
-tform = fitgeotrans(pts,refpts,'projective');
-image = imwarp(image,tform,'cubic', 'OutputView', imref2d([h, w]));
+tform = fitgeotrans(pts,refpts,'similarity');
+image = imwarp(image,tform,'bilinear', 'OutputView', imref2d([h, w]));
 
 end
 

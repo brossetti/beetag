@@ -2,7 +2,15 @@ function [ tagpaths ] = tagextract(vid, background, outpath)
 %TAGEXTRACT Detects and extracts bee tags from a preprocessed video
 %   Detailed explanation goes here
 close all
-% Detect MSER regions.
+
+% setup output directory
+[status, message] = mkdir(outpath, 'tags');
+if ~status
+    tagpaths = false;
+    return
+end
+
+% detect MSER regions.
 numFrames = 1;
 background = rgb2gray(background);
 
@@ -10,12 +18,14 @@ while hasFrame(vid)
     % read frame and remove background
     frame = readFrame(vid);
     gframe = imadjust(rgb2gray(frame));
-    gframebg = gframe - background ;
+    gframebg = gframe - background;
+%     gframebg = gframe - (2*background./3);
+%     gframebg = imabsdiff(double(gframe), background) ;
 
     subplot(3,1,1)
     imshow(frame)
     subplot(3,1,2)
-    imshow(gframebg)
+    imshow(gframebg,[])
     
     % detect MSER regions
     [mserRegions, mserConnComp] = detectMSERFeatures(gframebg,...
@@ -32,7 +42,7 @@ while hasFrame(vid)
         
         % filter regions with incorrect aspect ratio
         aspect = [mserStats.MinorAxisLength]./[mserStats.MajorAxisLength];
-        aspectIdx = aspect > 0.35 & aspect < 0.8;
+        aspectIdx = aspect > 0.35 & aspect < 0.7;
         
         % filter regions that are too round
         eccentricityIdx = [mserStats.Eccentricity] < 0.95;
@@ -76,6 +86,11 @@ while hasFrame(vid)
             
             % extract region
             tag = extractregion(frame,rect(1:end-1,:));
+            
+            % save tag
+            [~, vidName, ~] = fileparts(vid.Name);
+            filename = sprintf('%s_%.4f_%05d.tif', vidName, vid.CurrentTime, numFrames);
+            imwrite(tag, fullfile(outpath, 'tags', filename));
             
             subplot(3,1,2)
             hold on
