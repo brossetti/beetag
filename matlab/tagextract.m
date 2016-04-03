@@ -2,7 +2,7 @@ function [ tagpaths ] = tagextract(vid, background, outpath)
 %TAGEXTRACT Detects and extracts bee tags from a preprocessed video
 %   Detailed explanation goes here
 close all
-plt = true;
+plt = false;
 
 % setup output directory
 [status, message] = mkdir(outpath, 'tags');
