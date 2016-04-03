@@ -2,7 +2,7 @@ function [ img ] = tagpreproc(img)
 %TAGPREPROC Bee tag preprocessing
 %   Cleans bee tag images for use in OCR
 close all
-plt = false;
+plt = true;
 
 % display for testing
 if plt
@@ -11,6 +11,11 @@ if plt
     col=2;
     subplot(row,col,1)
     imshow(imresize(img, 10, 'nearest'))
+    
+    subplot(row,col,2)
+%     plot(sum(rgb2gray(img),1))
+    imshow(imresize(edge(rgb2gray(img),'Canny'),10,'nearest'))
+    pause(1)
 end
 
 %% Parameters
@@ -104,11 +109,11 @@ end
 % img = imerode(img, strel('line',2,90));
 
 %% Binarize
-% img = imbinarize(img);
+mask = imbinarize(img);
 
 % mask = zeros(size(img));
-% mask(2:h-1,2:w-1) = 1;
-% img = activecontour(img,logical(mask)); 
+% mask(2:h-5,2:w-5) = 1;
+img = activecontour(img,logical(mask)); 
 
 %% Filter Regions
 % cc = bwconncomp(img);

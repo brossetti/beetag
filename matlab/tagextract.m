@@ -2,6 +2,7 @@ function [ tagpaths ] = tagextract(vid, background, outpath)
 %TAGEXTRACT Detects and extracts bee tags from a preprocessed video
 %   Detailed explanation goes here
 close all
+plt = true;
 
 % setup output directory
 [status, message] = mkdir(outpath, 'tags');
@@ -12,21 +13,25 @@ end
 
 % detect MSER regions.
 numFrames = 1;
+numTags = 0;
+% background = background(:,:,3);
 background = rgb2gray(background);
 
 while hasFrame(vid)
     % read frame and remove background
     frame = readFrame(vid);
-    gframe = imadjust(rgb2gray(frame));
+    gframe = imadjust(frame(:,:,3));
+%     gframe = imadjust(rgb2gray(frame));
     gframebg = gframe - background;
 %     gframebg = gframe - (2*background./3);
 %     gframebg = imabsdiff(double(gframe), background) ;
-
-    subplot(3,1,1)
-    imshow(frame)
-    subplot(3,1,2)
-    imshow(gframebg,[])
     
+    if plt
+        subplot(3,1,1)
+        imshow(frame)
+        subplot(3,1,2)
+        imshow(gframebg,[])
+    end
     % detect MSER regions
     [mserRegions, mserConnComp] = detectMSERFeatures(gframebg,...
         'RegionAreaRange',[300 3000],'ThresholdDelta',4);
@@ -88,35 +93,28 @@ while hasFrame(vid)
             tag = extractregion(frame,rect(1:end-1,:));
             
             % save tag
+            numTags = numTags + 1;
             [~, vidName, ~] = fileparts(vid.Name);
             filename = sprintf('%s_%.4f_%05d.tif', vidName, vid.CurrentTime, numFrames);
-            imwrite(tag, fullfile(outpath, 'tags', filename));
+            tagpaths{numTags} = fullfile(outpath, 'tags', filename);
+            imwrite(tag, tagpaths{numTags});
             
-            subplot(3,1,2)
-            hold on
-            plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-            plot(rect(:,1),rect(:,2),'r')
-            hold off
-            subplot(3,1,3)
-            imshow(tag)
-            pause(0.001)
+            if plt
+                subplot(3,1,2)
+                hold on
+                plot(mserRegions, 'showPixelList', true,'showEllipses',false)
+                plot(rect(:,1),rect(:,2),'r')
+                hold off
+                subplot(3,1,3)
+                imshow(tag)
+                pause(0.001)
+            end
         end
     end %if
-    
-
-    
-
-
-%     n = length(mserStats);
-%     figure
-%     r = floor(sqrt(n));
-%     c = ceil(n/r);
-%     for i = 1:n
-%         subplot(r,c,i)
-%         imshow(mserStats(i).Image)
-%     end
-    
-    pause(0.001)
+   
+    if plt
+        pause(0.001)
+    end
     numFrames = numFrames + 1;
 end %while
 

@@ -1,7 +1,7 @@
 %% Set Parameters
 training = true;
-rootdir = '/Users/blair/Desktop/bee/AnnotatedTags/tags9621/good/';
-% rootdir = '/Users/blair/Desktop/bee/tags/MVI9621/';
+% rootdir = '/Users/blair/Desktop/bee/AnnotatedTags/tags9621/good/';
+rootdir = '/Users/blair/Desktop/bee/tags/';
 ext = '.tif';
 lang = '/Users/blair/dev/beetag/matlab/training/dgt/dgt/tessdata/dgt.traineddata';
 
@@ -38,8 +38,8 @@ for i = 1:numImg
     
     for j = 1:2
         %ocr
-        results{j}.ocr = ocr(img, 'CharacterSet', '0123456789', 'TextLayout', 'Block');
-%         results{j}.ocr = ocr(img, 'Language', lang, 'TextLayout', 'Block');
+%         results{j}.ocr = ocr(img, 'CharacterSet', '0123456789', 'TextLayout', 'Block');
+        results{j}.ocr = ocr(img, 'Language', lang, 'TextLayout', 'Block');
 
         %keep at most 3 digits by confidence level
         conf = results{j}.ocr.CharacterConfidences;
@@ -60,10 +60,10 @@ for i = 1:numImg
             text(text == ' ') = ''; 
         else
             %add digit confidence
-            results{j}.DigitConfidences = conf;
-            
+            results{j}.DigitConfidences = padarray(conf, 3-length(conf),'post');
+
             %compute average confidence
-            results{j}.AverageConfidence = mean(conf);
+            results{j}.AverageConfidence = mean(results{j}.DigitConfidences);
             
             %clean digits
             text = strtrim(results{j}.ocr.Text);
@@ -87,12 +87,10 @@ for i = 1:numImg
         orIdx = 2;
     end
     text = results{orIdx}.Digits;
-    dgtConf = results{orIdx}.DigitConfidences;
-    dgtConf = padarray(dgtConf, 3-length(dgtConf),'post');
  
     %print results
     if training
-        fprintf('Actual: %3s | OCR: %3s | Conf: (%f, %f, %f)\n', digits, text, dgtConf)
+        fprintf('Actual: %3s | OCR: %3s | Conf: (%f, %f, %f)\n', digits, text, results{orIdx}.DigitConfidences)
         if strcmp(digits,text)
             passed = passed + 1;
         end
@@ -101,4 +99,6 @@ for i = 1:numImg
     end
 end
 
-fprintf('Accuracy = %.3f\n', passed/numImg*100);
+if training
+    fprintf('Accuracy = %.3f\n', passed/numImg*100);
+end
