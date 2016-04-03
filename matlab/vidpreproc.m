@@ -3,6 +3,9 @@ function [ ppvid, background ] = vidpreproc(vid, etime, outpath)
 %   Extract the active region from a given video file and write a
 %   preprocessed video file for furthe r analysis
 
+%% Check MATLAB Version
+legacy = verLessThan('matlab', '9.0');
+
 %% Video Info
 stime = vid.CurrentTime;
 [~,name, ~] = fileparts(vid.Name);
@@ -41,7 +44,11 @@ vid.CurrentTime = stime;
 varImg = rgb2gray(mat2gray(varImg));
 
 % threshold
-mask = imbinarize(varImg);
+if legacy
+    mask = im2bw(varImg, graythresh(varImg));
+else
+    mask = imbinarize(varImg);
+end
 
 % clean mask
 mask = imdilate(mask,strel('square',3));
