@@ -2,7 +2,7 @@ function [ tagpaths ] = tagextract(vid, background, outpath)
 %TAGEXTRACT Detects and extracts bee tags from a preprocessed video
 %   Detailed explanation goes here
 close all
-plt = false;
+plt = true;
 
 % setup output directory
 [status, message] = mkdir(outpath, 'tags');
@@ -47,7 +47,7 @@ while hasFrame(vid)
         
         % filter regions with incorrect aspect ratio
         aspect = [mserStats.MinorAxisLength]./[mserStats.MajorAxisLength];
-        aspectIdx = aspect > 0.35 & aspect < 0.7;
+        aspectIdx = aspect > 0.3 & aspect < 0.65;
         
         % filter regions that are too round
         eccentricityIdx = [mserStats.Eccentricity] < 0.95;
@@ -97,7 +97,7 @@ while hasFrame(vid)
             [~, vidName, ~] = fileparts(vid.Name);
             filename = sprintf('%s_%.4f_%05d.tif', vidName, vid.CurrentTime, numFrames);
             tagpaths{numTags} = fullfile(outpath, 'tags', filename);
-            imwrite(tag, tagpaths{numTags});
+%             imwrite(tag, tagpaths{numTags});
             
             if plt
                 subplot(3,1,2)

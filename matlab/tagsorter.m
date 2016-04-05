@@ -1,6 +1,7 @@
 %% Get Input Paths
-rootdir = '/Users/blair/Desktop/tags9622/';
-files = dir([rootdir '*.tif']);
+rootdir = '/Users/blair/Desktop/bee/_TrainingVideos/MVI_9623_tags/';
+ext = '.tif';
+files = dir([rootdir '*' ext]);
 dirIdx = [files.isdir];
 files = {files(~dirIdx).name}';
 numImg = length(files);
@@ -13,6 +14,7 @@ end
 mkdir(rootdir, 'good');
 mkdir(rootdir, 'bad');
 
+%sort
 for i = 1:numImg
     %read image
     img = imread(files{i});
@@ -47,6 +49,45 @@ for i = 1:numImg
             
         end
 
+    end
+
+end
+
+%get list of good images
+files = dir(fullfile(rootdir,'good',['*' ext]));
+dirIdx = [files.isdir];
+files = {files(~dirIdx).name}';
+renamedIdx = cell2mat(cellfun(@(x) all(isstrprop(x(1:3),'digit')), files, 'UniformOutput', false));
+files = files(~renamedIdx);
+numImg = length(files);
+
+%built full file path
+for i = 1:numImg
+    files{i} = fullfile(rootdir, 'good', files{i});
+end
+
+%rename
+for i = 1:numImg
+    %read image
+    img = imread(files{i});
+    [path, name, ext] = fileparts(files{i});
+    
+    %prompt
+    imshow(imresize(img,10))
+    commandwindow
+    dgts = input([name ':']);
+    
+    while dgts ~= 0 && numel(num2str(dgts)) ~= 3
+        commandwindow
+        dgts = input([name ':']);
+    end
+    
+    if dgts == 0
+        disp('exiting...')
+        close all
+        break
+    else 
+        movefile(files{i},fullfile(path, [num2str(dgts) '_' name ext]))
     end
 
 end

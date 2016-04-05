@@ -1,9 +1,10 @@
 %% Set Parameters
 training = true;
 % rootdir = '/Users/blair/Desktop/bee/AnnotatedTags/tags9621/good/';
-rootdir = '/Users/blair/Desktop/bee/tags/';
+rootdir = '/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/good/';
 ext = '.tif';
-lang = '/Users/blair/dev/beetag/matlab/training/dgt/dgt/tessdata/dgt.traineddata';
+% lang = '/Users/blair/dev/beetag/matlab/training/dgt/dgt/tessdata/dgt.traineddata';
+lang = '/Users/blair/dev/beetag/matlab/training/beetag/tessdata/beetag.traineddata';
 
 %% Get Input Paths
 files = dir(fullfile(rootdir, ['*' ext]));
@@ -31,7 +32,7 @@ for i = 1:numImg
     
     %preprocess
     img = tagpreproc(img);
-%     imwrite(img, fullfile('/Users/blair/Desktop/bee/tags/TrainingFramesSelected_grayclean/',[name '.tif']));
+    imwrite(img, fullfile('/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/clean/',[name '.tif']));
     
     %process tag and rotated tag
     results = cell(1,2);
@@ -90,7 +91,7 @@ for i = 1:numImg
  
     %print results
     if training
-        fprintf('Actual: %3s | OCR: %3s | Conf: (%f, %f, %f)\n', digits, text, results{orIdx}.DigitConfidences)
+        fprintf('Actual: %3s | OCR: %3s | Conf: (%f, %f, %f) | Ornt: %d\n', digits, text, results{orIdx}.DigitConfidences, orIdx)
         if strcmp(digits,text)
             passed = passed + 1;
         end

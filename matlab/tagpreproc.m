@@ -2,7 +2,7 @@ function [ img ] = tagpreproc(img)
 %TAGPREPROC Bee tag preprocessing
 %   Cleans bee tag images for use in OCR
 close all
-plt = true;
+plt = false;
 
 % display for testing
 if plt
@@ -11,11 +11,6 @@ if plt
     col=2;
     subplot(row,col,1)
     imshow(imresize(img, 10, 'nearest'))
-    
-    subplot(row,col,2)
-%     plot(sum(rgb2gray(img),1))
-    imshow(imresize(edge(rgb2gray(img),'Canny'),10,'nearest'))
-    pause(1)
 end
 
 %% Parameters
@@ -87,12 +82,16 @@ if c > 1
     img = rgb2gray(img);
 end
 
+if plt
+    subplot(row,col,2)
+    imshow(imresize(img, 10, 'nearest'))
+    pause(1)
+end
 %% Deblur
 
 % PSF = fspecial('gaussian',7,10);
 % INITPSF = ones(size(PSF));
 % img = deconvblind(img,INITPSF);
-
 
 %% Denoise
 % img = wiener2(img, [2 2]);
@@ -106,14 +105,14 @@ end
 % img = imopen(img, strel('line',2,0));
 % img = imopen(img, strel('disk',2));
 
-% img = imerode(img, strel('line',2,90));
+% img = imopen(img, strel('line',2,90));
 
 %% Binarize
-mask = imbinarize(img);
+% mask = imbinarize(img);
 
 % mask = zeros(size(img));
 % mask(2:h-5,2:w-5) = 1;
-img = activecontour(img,logical(mask)); 
+% img = activecontour(img,logical(mask)); 
 
 %% Filter Regions
 % cc = bwconncomp(img);

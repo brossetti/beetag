@@ -4,7 +4,7 @@ function queenbee(filepath, stime, etime)
 
 %% Parse Input
 [path,name,~] = fileparts(filepath);
-force = true;
+force = false;
 
 %% Prep Video
 
