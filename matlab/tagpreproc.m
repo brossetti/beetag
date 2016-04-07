@@ -14,8 +14,8 @@ if plt
 end
 
 %% Parameters
-rbr = 5;    %rolling ball radius
-cp = 2;     %crop padding
+RBR = 5;    %rolling ball radius
+CP = 2;     %crop padding
 
 %% Check Image Type
 [h, w, c] = size(img);
@@ -59,11 +59,11 @@ for i = 1:c
     tmp = 255-img(:,:,i);
 
     % pad image
-    wpad = 2*rbr;
+    wpad = 2*RBR;
     tmp = padarray(tmp, [wpad wpad], 255);
     
     % define background
-    background = imopen(tmp,offsetstrel('ball',rbr,rbr));
+    background = imopen(tmp,offsetstrel('ball',RBR,RBR));
     
     % remove background
     tmp = tmp-background;
@@ -104,8 +104,8 @@ minmax = @(x) [min(x) max(x)];
 ccorr = minmax(pxList);
 
 %% Crop to Coordinates
-ccorr(1:2) = ccorr(1:2) - cp;
-ccorr(3:4) = ccorr(3:4) + cp;
+ccorr(1:2) = ccorr(1:2) - CP;
+ccorr(3:4) = ccorr(3:4) + CP;
 ccorr(ccorr < 1 ) = 1;
 if ccorr(3) > w
     ccorr(3) = w;

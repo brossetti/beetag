@@ -1,6 +1,6 @@
 %% Set Parameters
-training = true;
-plt = true;
+training = false;
+plt = false;
 % rootdir = '/Users/blair/Desktop/bee/AnnotatedTags/tags9621/good/';
 rootdir = '/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/good/';
 ext = '.tif';
@@ -38,7 +38,7 @@ for i = 1:numImg
     
     %preprocess
     img = tagpreproc(img);
-    imwrite(img, fullfile('/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/clean/',[name '.tif']));
+%     imwrite(img, fullfile('/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/clean/',[name '.tif']));
     
     %process tag and rotated tag
     results = cell(1,2);

@@ -5,7 +5,7 @@ close all
 plt = false;
 
 % setup output directory
-[status, message] = mkdir(outpath, 'tags');
+[status, ~] = mkdir(outpath, 'tags');
 if ~status
     tagpaths = false;
     return
@@ -40,7 +40,7 @@ while hasFrame(vid)
         % measure MSER properties
         mserStats = regionprops(mserConnComp, 'BoundingBox', 'Solidity',...
             'Eccentricity', 'ConvexHull', 'MajorAxisLength',...
-            'MinorAxisLength', 'ConvexArea', 'Image');
+            'MinorAxisLength', 'ConvexArea', 'Centroid');
 
         % filter regions with big holes
         solidityIdx = [mserStats.Solidity] > 0.85;
@@ -97,7 +97,7 @@ while hasFrame(vid)
             [~, vidName, ~] = fileparts(vid.Name);
             filename = sprintf('%s_%.4f_%05d.tif', vidName, vid.CurrentTime, numFrames);
             tagpaths{numTags} = fullfile(outpath, 'tags', filename);
-%             imwrite(tag, tagpaths{numTags});
+            imwrite(tag, tagpaths{numTags});
             
             if plt
                 subplot(3,1,2)
