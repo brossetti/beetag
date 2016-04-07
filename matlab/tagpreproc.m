@@ -1,11 +1,11 @@
 function [ img ] = tagpreproc(img)
 %TAGPREPROC Bee tag preprocessing
 %   Cleans bee tag images for use in OCR
-close all
 plt = false;
 
 % display for testing
 if plt
+    close all
     figure
     row=1;
     col=2;
@@ -15,6 +15,7 @@ end
 
 %% Parameters
 rbr = 5;    %rolling ball radius
+cp = 2;     %crop padding
 
 %% Check Image Type
 [h, w, c] = size(img);
@@ -82,11 +83,39 @@ if c > 1
     img = rgb2gray(img);
 end
 
-if plt
-    subplot(row,col,2)
-    imshow(imresize(img, 10, 'nearest'))
-    pause(1)
+%% Define Digit Regions
+mask = mat2gray(sum(img,2)*sum(img,1));
+mask = imbinarize(mask);
+mask = bwmorph(mask, 'hbreak', Inf);
+mask = bwmorph(mask, 'spur', Inf);
+
+%% Filter Regions
+cc = bwconncomp(mask);
+stats = regionprops(cc, 'Area', 'PixelList');
+
+% filter small regions
+areaIdx = [stats.Area] > 20;
+
+% get list of pixels
+pxList = cat(1, stats(areaIdx).PixelList);
+
+% get crop coordinates
+minmax = @(x) [min(x) max(x)];
+ccorr = minmax(pxList);
+
+%% Crop to Coordinates
+ccorr(1:2) = ccorr(1:2) - cp;
+ccorr(3:4) = ccorr(3:4) + cp;
+ccorr(ccorr < 1 ) = 1;
+if ccorr(3) > w
+    ccorr(3) = w;
 end
+if ccorr(4) > h
+    ccorr(4) = h;
+end
+img = img(ccorr(2):ccorr(4),ccorr(1):ccorr(3));
+
+
 %% Deblur
 
 % PSF = fspecial('gaussian',7,10);
@@ -107,34 +136,34 @@ end
 
 % img = imopen(img, strel('line',2,90));
 
-%% Binarize
-% mask = imbinarize(img);
+%% Create Mask
+% img = imopen(img,strel('rectangle',[3 5]));
+% img = imbinarize(img);
+% mask = activecontour(img,logical(mask)); 
 
-% mask = zeros(size(img));
-% mask(2:h-5,2:w-5) = 1;
-% img = activecontour(img,logical(mask)); 
 
-%% Filter Regions
-% cc = bwconncomp(img);
-% stats = regionprops(cc, 'BoundingBox', 'Orientation',...
-%     'Eccentricity', 'ConvexHull', 'ConvexArea', 'Image');
-% 
-% % filter regions with big holes
-% % solidityIdx = [stats.Solidity] > 0.85;
-% 
-% % filter regions with incorrect aspect ratio
-% bbox = vertcat(stats.BoundingBox);
-% w = bbox(:,3);
-% h = bbox(:,4);
-% aspect = w./h;
-% aspectIdx = aspect > 0.3 & aspect < 0.75;
-% 
-% % filter regions that are too round
-% % eccentricityIdx = [stats.Eccentricity] < 0.95;
-% 
-% % process filters
-% filterIdx = find(aspectIdx);
-% img = ismember(labelmatrix(cc), filterIdx);
+%% Apply Mask
+% img = img.*uint8(mask);
+
+%% Crop to Digits
+% plotprof(img)
+% plotprof(imresize(edge(img,'Sobel',[],'vertical'),10,'nearest'))
+% pause(2)
+
+% xderr = diff(sum(img,2));
+% yderr = diff(sum(img,1));
+% % [~, x1] = max(xderr);
+% % [~, x2] = min(xderr);
+% [~, x1] = findpeaks(xderr, 'MinPeakProminence', 1e2);
+% [~, x2] = findpeaks(max(xderr)-xderr, 'MinPeakProminence', 1e2);
+% [~, y1] = findpeaks(yderr, 'MinPeakProminence', 1e2);
+% [~, y2] = findpeaks(max(yderr)-yderr, 'MinPeakProminence', 1e2);
+% % img = img(x1(1):x2(end), y1(1):y2(end));
+
+
+%% Separate Connected Digits
+% [~, gaps] = findpeaks(sum(imcomplement(img),1), 'MinPeakProminence', 1e3);
+% img(:, gaps) = 0;
 
 % display
 if plt
@@ -144,4 +173,13 @@ if plt
 end
 end
 
+function plotprof(img)
+subplot(2,2,1)
+imshow(imresize(img,10,'nearest'));
+subplot(2,2,2)
+findpeaks(diff(sum(img,2)),'MinPeakProminence', 10);
+camroll(-90)
+subplot(2,2,3)
+findpeaks(diff(sum(img,1)),'MinPeakProminence', 10);
+end
 

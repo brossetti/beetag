@@ -1,10 +1,11 @@
 %% Set Parameters
 training = true;
+plt = true;
 % rootdir = '/Users/blair/Desktop/bee/AnnotatedTags/tags9621/good/';
 rootdir = '/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/good/';
 ext = '.tif';
-% lang = '/Users/blair/dev/beetag/matlab/training/dgt/dgt/tessdata/dgt.traineddata';
-lang = '/Users/blair/dev/beetag/matlab/training/beetag/tessdata/beetag.traineddata';
+lang = '/Users/blair/dev/beetag/matlab/training/dgt/dgt/tessdata/dgt.traineddata';
+% lang = '/Users/blair/dev/beetag/matlab/training/beetag/tessdata/beetag.traineddata';
 
 %% Get Input Paths
 files = dir(fullfile(rootdir, ['*' ext]));
@@ -28,6 +29,11 @@ for i = 1:numImg
     %get ground truth digits if in training mode
     if training
         digits = name(1:3);
+        if plt
+            subplot(1,2,1)
+            imshow(imresize(img,10,'nearest'))
+            title(digits);
+        end
     end
     
     %preprocess
@@ -59,6 +65,9 @@ for i = 1:numImg
             text = results{j}.ocr.Text(idx);
             text = strtrim(text);
             text(text == ' ') = ''; 
+            
+            %get bounding boxes
+            results{j}.BBoxes = results{j}.ocr.CharacterBoundingBoxes(idx,:);
         else
             %add digit confidence
             results{j}.DigitConfidences = padarray(conf, 3-length(conf),'post');
@@ -68,7 +77,10 @@ for i = 1:numImg
             
             %clean digits
             text = strtrim(results{j}.ocr.Text);
-            text(text == ' ') = ''; 
+            text(text == ' ') = '';
+            
+            %get bounding boxes
+            results{j}.BBoxes = results{j}.ocr.CharacterBoundingBoxes;
         end
         
         %add extracted digits
@@ -81,16 +93,30 @@ for i = 1:numImg
     %determine best orientation
     if results{1}.AverageConfidence >= results{2}.AverageConfidence
         orIdx = 1;
+    else
+        orIdx = 2;
         
         %flip image back
         img = rot90(img,2);
-    else
-        orIdx = 2;
     end
     text = results{orIdx}.Digits;
  
     %print results
     if training
+        if plt
+            if length(results{orIdx}.Digits) == 3
+                dgtIdx = digits == results{orIdx}.Digits;
+                ocrImg = insertShape(img,'rectangle', results{orIdx}.BBoxes(dgtIdx,:), 'Color', 'green');
+                ocrImg = insertShape(ocrImg,'rectangle', results{orIdx}.BBoxes(~dgtIdx,:), 'Color', 'red');
+            else
+                ocrImg = insertShape(img,'rectangle', results{orIdx}.BBoxes, 'Color', 'yellow');
+            end
+            
+            subplot(1,2,2)
+            imshow(ocrImg)
+            title(results{orIdx}.Digits);
+            pause(2)
+        end
         fprintf('Actual: %3s | OCR: %3s | Conf: (%f, %f, %f) | Ornt: %d\n', digits, text, results{orIdx}.DigitConfidences, orIdx)
         if strcmp(digits,text)
             passed = passed + 1;
