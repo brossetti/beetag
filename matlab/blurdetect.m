@@ -1,41 +1,26 @@
-close all
+function [ blurred ] = blurdetect(img, threshold)
+%BLURDETECT Identifies blurred images based on a given threshold
+%   For a given grayscale image and threshold value between 0 and 1, tthe
+%   value true is returned if the image is blurred and false is returned
+%   if the image is not blurred. An image is blurred if the 1/log(variance)
+%   of the edge image is below the threshold value.
 
-%% Set Parameters
-training = true;
-% rootdir = '/Users/blair/Desktop/bee/AnnotatedTags/tags9621/good/';
-rootdir = '/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/bad/';
-ext = '.tif';
-
-%% Get Input Paths
-files = dir(fullfile(rootdir, ['*' ext]));
-dirIdx = [files.isdir];
-files = {files(~dirIdx).name}';
-numImg = length(files);
-
-%build full file path
-for i = 1:numImg
-    files{i} = fullfile(rootdir,files{i});
+%% Check Image Properties
+if size(img,3) ~= 1
+    error('blurdetect: only grayscale images are valid');
 end
 
-%% Process Images
-passed = 0;
-blurvals = zeros(1,numImg);
-for i = 1:numImg
-    %read image
-    img = imread(files{i});
-    [~, name, ~] = fileparts(files{i});
+%% Compute Blur Metric
+% median filter to remove noise
+img = medfilt2(img);
+
+% convolve with Laplacian
+convimg = conv2(double(img), [0, 1, 0; 1, -4, 1; 0, 1, 0]);
+
+% calculate variance
+blurval = 1/log(var((convimg(convimg ~= 0))));
     
-    %convert to grayscale
-    tmp = img(:,:,3);
-    
-    %convolve with Laplacian
-    convimg = conv2(double(tmp), [0, 1, 0; 1, -4, 1; 0, 1, 0]);
-    
-    %calculate variance
-    blurvals(i) = 1/std(convimg(convimg ~= 0));
-    
-%     imshow(imresize(tmp, 10, 'nearest'))
-%     title(num2str(blurval));
-%     pause(2);
+%% Compare to Threshold
+blurred = blurval < threshold;
+
 end
-fprintf('Mean: %f | SD: %f\n', mean(blurvals), std(blurvals));

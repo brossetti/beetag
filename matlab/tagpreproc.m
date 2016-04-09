@@ -1,4 +1,4 @@
-function [ img ] = tagpreproc(img)
+function [ img, cropbbox ] = tagpreproc(img)
 %TAGPREPROC Bee tag preprocessing
 %   Cleans bee tag images for use in OCR
 plt = false;
@@ -13,15 +13,16 @@ if plt
     imshow(imresize(img, 10, 'nearest'))
 end
 
-%% Parameters
+% parameters
 RBR = 5;    %rolling ball radius
 CP = 2;     %crop padding
 
-%% Check Image Type
+% get image dimensions
 [h, w, c] = size(img);
 
-%% Wavelet Denoise
+% denoise and background subtract
 for i = 1:c
+    % wavelet denoise
     tmp = img(:,:,i);
     wname = 'fk4';
     level = 5;
@@ -30,7 +31,7 @@ for i = 1:c
     [tmp , pads] = multipad(tmp, 2^level, 0);
     
     % denoising parameters
-    sorh = 'h';    % Specified soft or hard thresholding
+    sorh = 'h';
     thrSettings =  repmat(14.5, [3 5]);
 
     % decompose using SWT2
@@ -46,17 +47,14 @@ for i = 1:c
         end
     end
 
-    % reconstruct the denoise signal using ISWT2
+    % reconstruct the denoise signal
     tmp = iswt2(wDEC,wname);
     
     % remove pad
     tmp = tmp(pads(1)+1:end-pads(2),pads(3)+1:end-pads(4));
-    img(:,:,i) = tmp;
-end
-
-%% Background Subtraction
-for i = 1:c
-    tmp = 255-img(:,:,i);
+    
+    % background subtract
+    tmp = 255-tmp;
 
     % pad image
     wpad = 2*RBR;
@@ -75,26 +73,33 @@ for i = 1:c
     img(:,:,i) = imadjust(tmp);
 end
 
-%% Sharpen
+% sharpen
 img = imsharpen(img, 'Threshold', 0.7);
 
-%% Convert to Grayscale
+% convert to grayscale
 if c > 1
     img = rgb2gray(img);
 end
 
-%% Define Digit Regions
+% define digit region
 mask = mat2gray(sum(img,2)*sum(img,1));
 mask = imbinarize(mask);
 mask = bwmorph(mask, 'hbreak', Inf);
 mask = bwmorph(mask, 'spur', Inf);
 
-%% Filter Regions
+% filter regions
 cc = bwconncomp(mask);
 stats = regionprops(cc, 'Area', 'PixelList');
 
 % filter small regions
 areaIdx = [stats.Area] > 20;
+
+% check if empty
+if all(~areaIdx)
+    img = [];
+    cropbbox = [];
+    return
+end
 
 % get list of pixels
 pxList = cat(1, stats(areaIdx).PixelList);
@@ -103,7 +108,7 @@ pxList = cat(1, stats(areaIdx).PixelList);
 minmax = @(x) [min(x) max(x)];
 ccorr = minmax(pxList);
 
-%% Crop to Coordinates
+% crop to coordinates
 ccorr(1:2) = ccorr(1:2) - CP;
 ccorr(3:4) = ccorr(3:4) + CP;
 ccorr(ccorr < 1 ) = 1;
@@ -115,55 +120,7 @@ if ccorr(4) > h
 end
 img = img(ccorr(2):ccorr(4),ccorr(1):ccorr(3));
 
-
-%% Deblur
-
-% PSF = fspecial('gaussian',7,10);
-% INITPSF = ones(size(PSF));
-% img = deconvblind(img,INITPSF);
-
-%% Denoise
-% img = wiener2(img, [2 2]);
-
-% wavelet denoising
-% [thr,sorh,keepapp] = ddencmp('den','wv', img);
-% xd = wdencmp('gbl',img,'sym4',2,thr,sorh,keepapp);
-% img = mat2gray(xd);
-
-%% Morphological Operations
-% img = imopen(img, strel('line',2,0));
-% img = imopen(img, strel('disk',2));
-
-% img = imopen(img, strel('line',2,90));
-
-%% Create Mask
-% img = imopen(img,strel('rectangle',[3 5]));
-% img = imbinarize(img);
-% mask = activecontour(img,logical(mask)); 
-
-
-%% Apply Mask
-% img = img.*uint8(mask);
-
-%% Crop to Digits
-% plotprof(img)
-% plotprof(imresize(edge(img,'Sobel',[],'vertical'),10,'nearest'))
-% pause(2)
-
-% xderr = diff(sum(img,2));
-% yderr = diff(sum(img,1));
-% % [~, x1] = max(xderr);
-% % [~, x2] = min(xderr);
-% [~, x1] = findpeaks(xderr, 'MinPeakProminence', 1e2);
-% [~, x2] = findpeaks(max(xderr)-xderr, 'MinPeakProminence', 1e2);
-% [~, y1] = findpeaks(yderr, 'MinPeakProminence', 1e2);
-% [~, y2] = findpeaks(max(yderr)-yderr, 'MinPeakProminence', 1e2);
-% % img = img(x1(1):x2(end), y1(1):y2(end));
-
-
-%% Separate Connected Digits
-% [~, gaps] = findpeaks(sum(imcomplement(img),1), 'MinPeakProminence', 1e3);
-% img(:, gaps) = 0;
+cropbbox = [ccorr(1:2), ccorr(3)-ccorr(1), ccorr(4)-ccorr(2)];
 
 % display
 if plt
@@ -172,14 +129,3 @@ if plt
     pause(2)
 end
 end
-
-function plotprof(img)
-subplot(2,2,1)
-imshow(imresize(img,10,'nearest'));
-subplot(2,2,2)
-findpeaks(diff(sum(img,2)),'MinPeakProminence', 10);
-camroll(-90)
-subplot(2,2,3)
-findpeaks(diff(sum(img,1)),'MinPeakProminence', 10);
-end
-

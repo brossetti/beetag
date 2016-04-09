@@ -1,4 +1,4 @@
-function [ tagpaths ] = tagextract(vid, background, outpath)
+function [ annotations ] = tagextract(vid, background, outpath)
 %TAGEXTRACT Detects and extracts bee tags from a preprocessed video
 %   Detailed explanation goes here
 close all
@@ -7,13 +7,19 @@ plt = false;
 % setup output directory
 [status, ~] = mkdir(outpath, 'tags');
 if ~status
-    tagpaths = false;
+    annotations = false;
     return
 end
 
+% load classifier
+load('classifier.mat');
+
+% get video information
+[~, vidName, ~] = fileparts(vid.Name);
+
 % detect MSER regions.
 numFrames = 1;
-numTags = 0;
+numTags = 1;
 % background = background(:,:,3);
 background = rgb2gray(background);
 
@@ -32,6 +38,7 @@ while hasFrame(vid)
         subplot(3,1,2)
         imshow(gframebg,[])
     end
+    
     % detect MSER regions
     [mserRegions, mserConnComp] = detectMSERFeatures(gframebg,...
         'RegionAreaRange',[300 3000],'ThresholdDelta',4);
@@ -40,7 +47,7 @@ while hasFrame(vid)
         % measure MSER properties
         mserStats = regionprops(mserConnComp, 'BoundingBox', 'Solidity',...
             'Eccentricity', 'ConvexHull', 'MajorAxisLength',...
-            'MinorAxisLength', 'ConvexArea', 'Centroid');
+            'MinorAxisLength', 'ConvexArea', 'Centroid', 'Area');
 
         % filter regions with big holes
         solidityIdx = [mserStats.Solidity] > 0.85;
@@ -92,12 +99,35 @@ while hasFrame(vid)
             % extract region
             tag = extractregion(frame,rect(1:end-1,:));
             
+            % get HOG features and classify as good, blurred, or bad
+            features = extractHOGFeatures(imresize(tag, [30 60]), 'CellSize', [4 4]);
+            class = predict(classifier, features);
+            switch class
+                case 1
+                    blurred = false;
+                case 2
+                    blurred = true;
+                case 3
+                    continue
+            end
+            
             % save tag
-            numTags = numTags + 1;
-            [~, vidName, ~] = fileparts(vid.Name);
-            filename = sprintf('%s_%.4f_%05d.tif', vidName, vid.CurrentTime, numFrames);
-            tagpaths{numTags} = fullfile(outpath, 'tags', filename);
-            imwrite(tag, tagpaths{numTags});
+            filename = sprintf('%s_tag%06d.tif', vidName, numTags);
+            filepath = fullfile(outpath, 'tags', filename);
+            imwrite(tag, filepath);
+            
+            % add annotations
+            annotations(numTags).filename = filename;               %#ok<AGROW>
+            annotations(numTags).filepath = filepath;               %#ok<AGROW>
+            annotations(numTags).tagid = sprintf('%06d', numTags);  %#ok<AGROW>
+            annotations(numTags).frame = numFrames;                 %#ok<AGROW>
+            annotations(numTags).time = vid.CurrentTime;            %#ok<AGROW>
+            annotations(numTags).mbr = rect;                        %#ok<AGROW>
+            annotations(numTags).bbox = mserStats(i).BoundingBox;   %#ok<AGROW>
+            annotations(numTags).centroid = mserStats(i).Centroid;  %#ok<AGROW>
+            annotations(numTags).area = mserStats(i).Area;          %#ok<AGROW>
+            annotations(numTags).blurred = blurred;                 %#ok<AGROW>
+
             
             if plt
                 subplot(3,1,2)
@@ -109,14 +139,22 @@ while hasFrame(vid)
                 imshow(tag)
                 pause(0.001)
             end
-        end
+            
+            % increment tag counter
+            numTags = numTags + 1;
+        end %for
     end %if
    
     if plt
         pause(0.001)
     end
+    
+    % increment frame counter
     numFrames = numFrames + 1;
 end %while
+
+% save tag annotations
+save(fullfile(outpath, 'tags', 'tag_annotations.mat'), 'annotations');
 
 end %function
 

@@ -4,7 +4,8 @@ function queenbee(filepath, stime, etime)
 
 %% Parse Input
 [path,name,~] = fileparts(filepath);
-force = true;
+force = false;
+training = false;
 
 %% Prep Video
 
@@ -17,12 +18,12 @@ etime = vid.Duration - etime;
 %% Preprocess Video
 ppvidpath = fullfile(path,[name '_preprocessed.avi']);
 backgroundpath = fullfile(path,[name '_background.png']);
-if exist(ppvidpath,'file') && exist(backgroundpath,'file') && ~force
+if exist(ppvidpath, 'file') && exist(backgroundpath, 'file') && ~force
     disp('Preprocessed video and background image exist');
     disp('Getting video handle...');
     ppvid = VideoReader(ppvidpath);
     
-    disp('Getting background image...')
+    disp('Getting background image...');
     background = imread(backgroundpath);
 else
     disp('Preprocessing video and generating background image...');
@@ -30,8 +31,28 @@ else
 end
 
 %% Detect Tags
-disp('Reading Tags...');
-tagfiles = tagextract(ppvid, background, path);
+tapath = fullfile(path,'tags', 'tag_annotations.mat');
+if exist(tapath, 'file') && ~force
+    disp('Tag images exist');
+    disp('Getting annotation file...');
+    load(tapath);
+else
+    disp('Detecting tags...');
+    annotations = tagextract(ppvid, background, path);
+end
+
+%% Read Tags
+disp('Reading tags...');
+annotations = tagocr(annotations, path);
+
+%% Filter/Process Results
+disp('Filtering results...');
+annotations = tagfilter(annotations, path);
+
+%% Generate Display
+disp('Generating processed video...');
+tagdisp(annotations,'');
+
 
 end
 
