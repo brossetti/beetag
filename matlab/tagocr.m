@@ -7,8 +7,7 @@ function [ annotations ] = tagocr(annotations, outpath)
 
 % set OCR language
 plt = false;
-lang = '/Users/blair/dev/beetag/matlab/training/dgt/dgt/tessdata/dgt.traineddata';
-% lang = '/Users/blair/dev/beetag/matlab/training/beetag/tessdata/beetag.traineddata';
+lang = 'tessdata/dgt.traineddata';
 
 % preprocess tag image
 for i = 1:length(annotations)
