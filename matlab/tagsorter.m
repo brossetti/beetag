@@ -1,5 +1,5 @@
 %% Get Input Paths
-rootdir = '/Users/blair/Desktop/test/';
+rootdir = '/Users/blair/Desktop/tags/';
 ext = '.tif';
 files = dir([rootdir '*' ext]);
 dirIdx = [files.isdir];
