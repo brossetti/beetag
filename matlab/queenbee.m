@@ -42,16 +42,24 @@ else
 end
 
 %% Read Tags
-disp('Reading tags...');
-annotations = tagocr(annotations, path);
+if isfield(annotations, 'digits') && ~force
+    disp('OCR data exists')
+else
+    disp('Reading tags...');
+    annotations = tagocr(annotations, path);
+end
 
 %% Filter/Process Results
-disp('Filtering results...');
-annotations = tagfilter(annotations, path);
+if isfield(annotations, 'trackid') && ~force
+    disp('Track ID exists')
+else
+    disp('Filtering results...');
+    annotations = tagfilter(annotations, path);
+end
 
-%% Generate Display
-disp('Generating processed video...');
-tagdisp(annotations,'');
+%% Tag Editor
+disp('Starting tag editor...');
+tageditor(annotations, ppvid);
 
 
 end
