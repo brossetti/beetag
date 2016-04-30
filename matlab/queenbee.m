@@ -50,7 +50,7 @@ else
 end
 
 %% Filter/Process Results
-if isfield(annotations, 'trackid') && ~force
+if isfield(annotations, 'trackid') && ~force && false
     disp('Track ID exists')
 else
     disp('Filtering results...');

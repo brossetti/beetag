@@ -91,6 +91,11 @@ function tracks_Callback(hObject, eventdata)
 end %tracks_Callback
 
 function tags_SelectionCallback(hObject, eventdata)
+    % skip if no index
+    if isempty(eventdata.Indices)
+        return
+    end
+    
     % get data
     gdata = guidata(hObject);
     row = eventdata.Indices(1,1);
@@ -130,6 +135,5 @@ function showframe(idx, gdata)
     
     % display
     image(gdata.axvid, frame);
-    axis off;
-    
+    axis off;    
 end %showframe
