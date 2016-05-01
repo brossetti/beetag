@@ -54,7 +54,7 @@ if isfield(annotations, 'trackid') && ~force
     disp('Track ID exists')
 else
     disp('Filtering results...');
-    annotations = tagfilter(annotations, path);
+    annotations = tagtracker(annotations, path);
 end
 
 %% Tag Editor

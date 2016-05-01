@@ -79,7 +79,7 @@ hexportmov = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Movie', .
 hquit = uicontrol(peditor,'Style','pushbutton', 'String', 'Quit', ...
         'Units', 'normalized', 'Position',[0.01 0.01 0.98 0.155], ...
         'Callback', @quit_Callback);
-        
+    
 % store gui data
 gdata.f = f;
 gdata.annotations = annotations;
@@ -91,6 +91,7 @@ gdata.htracks = htracks;
 gdata.htags = htags;
 gdata.htoggle = htoggle;
 gdata.htxtbox = htxtbox;
+gdata.times = unique([0, annotations.time]);
 guidata(f, gdata);
 
 % add video frame
@@ -286,7 +287,7 @@ function showframe(idx, gdata)
     % get data for frame
     framedata = gdata.annotations([gdata.annotations.time] == time);
     
-    % get indices
+    % get index for specific tag
     idx = strcmp(tagid, {framedata.tagid});
     
     % get frame

@@ -24,6 +24,9 @@ numTags = 1;
 background = rgb2gray(background);
 
 while hasFrame(vid)
+    % get current time
+    time = vid.CurrentTime;
+    
     % read frame and remove background
     frame = readFrame(vid);
     gframe = imadjust(frame(:,:,3));
@@ -121,7 +124,7 @@ while hasFrame(vid)
             annotations(numTags).filepath = filepath;               %#ok<AGROW>
             annotations(numTags).tagid = sprintf('%06d', numTags);  %#ok<AGROW>
             annotations(numTags).frame = numFrames;                 %#ok<AGROW>
-            annotations(numTags).time = vid.CurrentTime;            %#ok<AGROW>
+            annotations(numTags).time = time;                       %#ok<AGROW>
             annotations(numTags).mbr = rect;                        %#ok<AGROW>
             annotations(numTags).bbox = mserStats(i).BoundingBox;   %#ok<AGROW>
             annotations(numTags).centroid = mserStats(i).Centroid;  %#ok<AGROW>

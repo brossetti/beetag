@@ -1,5 +1,5 @@
-function [ annotations ] = tagfilter(annotations, outpath)
-%TAGFILTER Filters/processes tag annotations to define tracked trackects
+function [ annotations ] = tagtracker(annotations, outpath)
+%TAGTRACKER Filters/processes tag annotations to define tracked trackects
 % 
 
 % parameters
@@ -16,7 +16,6 @@ times = unique([annotations.time]);
 for i = 1:find([annotations.time] == times(1), 1, 'last')
     annotations(i).trackid = i;
 end
-
 
 %loop through each time point
 for i = times(2:end)
@@ -40,15 +39,11 @@ for i = times(2:end)
         
         % create feature matrix for tracks
         trackMat = [vertcat(tracks.centroid), vertcat(tracks.area)];
-%         trackMat = vertcat(tracks.centroid);
-
-        
+       
         % create feature matrix for current tags
         tags = annotations(tagIdx);
         tagMat = [vertcat(tags.centroid), vertcat(tags.area)];
-%         tagMat = vertcat(tags.centroid);
 
-        
         % match features
         idxPair = matchFeatures(trackMat, tagMat, 'Unique', true);
         
@@ -68,12 +63,8 @@ for i = times(2:end)
             [tags(idxPair(:,2)).trackid] = tracks(idxPair(:,1)).trackid;
         end
         
-        [annotations(tagIdx).trackid] = tags.trackid;
-        
-        
+        [annotations(tagIdx).trackid] = tags.trackid;    
     end %if-else
-    
-
 end %for
 
 % save tag annotations
