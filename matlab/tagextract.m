@@ -129,7 +129,7 @@ while hasFrame(vid)
             annotations(numTags).bbox = mserStats(i).BoundingBox;   %#ok<AGROW>
             annotations(numTags).centroid = mserStats(i).Centroid;  %#ok<AGROW>
             annotations(numTags).area = mserStats(i).Area;          %#ok<AGROW>
-            annotations(numTags).blurred = blurred;                 %#ok<AGROW>
+%             annotations(numTags).blurred = blurred;                 %#ok<AGROW>
 
             
             if plt

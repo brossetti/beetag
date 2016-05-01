@@ -10,7 +10,7 @@ if isfield(annotations, 'trackid')
     annotations = rmfield(annotations, 'trackid');
 end
 
-% initialize track structure with trackects in first frame
+% initialize track structure with tracks in first frame
 times = unique([annotations.time]);
 
 for i = 1:find([annotations.time] == times(1), 1, 'last')

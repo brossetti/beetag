@@ -44,13 +44,14 @@ tagdata = tracks2cell(annotations, tracks(1));
 htags = uitable(ptags, 'Data', tagdata, ...
         'Units', 'normalized', 'Position', [0.01, 0.01, .98, .98], ...
         'RowName', [], ...
-        'ColumnName', {'Track', 'Tag', 'Time', 'X', 'Y', 'Digits'}, ...
-        'ColumnEditable', logical([1 0 0 0 0 1]), ...
+        'ColumnName', {'Tag', 'Track', 'Tag ID', 'Time', 'X', 'Y', 'Digits'}, ...
+        'ColumnFormat', {'logical', 'numeric', 'char', 'numeric', 'numeric', 'numeric', 'char'}, ...
+        'ColumnEditable', logical([1 1 0 0 0 0 1]), ...
         'CellSelectionCallback', @tags_SelectionCallback, ...
         'CellEditCallback', @tags_EditCallback);
 
-wtable = htags.Extent(3)*f.Position(3); 
-htags.ColumnWidth = {floor(wtable/size(tagdata,2))-1};
+wtable = (ptags.Position(3)-htags.Position(1)*2)*f.Position(3); 
+htags.ColumnWidth = {floor(wtable/size(tagdata,2))};
 
 % add editor controls
 htoggle(1) = uicontrol(peditor, 'Style', 'togglebutton', ...
@@ -74,8 +75,9 @@ hsave = uicontrol(peditor,'Style','pushbutton', 'String', 'Save', ...
 hexportdata = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Data', ...
               'Units', 'normalized', 'Position',[0.01 0.34 0.98 0.155], ...
               'Callback', @exportdata_Callback);
-hexportmov = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Movie', ...
-             'Units', 'normalized', 'Position',[0.01 0.175 0.98 0.155]);
+hexportvid = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Video', ...
+             'Units', 'normalized', 'Position',[0.01 0.175 0.98 0.155], ...
+             'Callback', @exportvid_Callback);
 hquit = uicontrol(peditor,'Style','pushbutton', 'String', 'Quit', ...
         'Units', 'normalized', 'Position',[0.01 0.01 0.98 0.155], ...
         'Callback', @quit_Callback);
@@ -147,8 +149,8 @@ function tags_EditCallback(hObject, eventdata)
     r = idx(1,1);
     c = idx(1,2);
     
-    % check which column editted (6 - digits; 1 - track)
-    if c == 6
+    % check which column editted (7 - digits; 2 - track, 1 - istag)
+    if c == 7
         % check format
         if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
             % reset previous value
@@ -157,10 +159,10 @@ function tags_EditCallback(hObject, eventdata)
         end
         
         % update digits
-        tagid = hObject.Data{r,2};
+        tagid = hObject.Data{r,3};
         anntIdx = strcmp(tagid, {gdata.annotations.tagid});
         gdata.annotations(anntIdx).digits = val;
-    else
+    elseif c == 2
         % check format
         if ~isnumeric(val) || int64(val) ~= val || val < 1
             % reset previous value
@@ -169,14 +171,19 @@ function tags_EditCallback(hObject, eventdata)
         end
         
         % update track
-        tagid = hObject.Data{r,2};
+        tagid = hObject.Data{r,3};
         anntIdx = strcmp(tagid, {gdata.annotations.tagid});
         gdata.annotations(anntIdx).trackid = val;
         
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
         gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
-    end
+    else
+        % update istag
+        tagid = hObject.Data{r,3};
+        anntIdx = strcmp(tagid, {gdata.annotations.tagid});
+        gdata.annotations(anntIdx).istag = val;
+    end %if-elseif
     
     % reassign guidata
     guidata(hObject, gdata);
@@ -211,8 +218,8 @@ function apply_Callback(hObject, eventdata)
         end
         
         % update digits
-        gdata.htags.Data(:,6) = {val};
-        tagid = gdata.htags.Data(:,2);
+        gdata.htags.Data(:,7) = {val};
+        tagid = gdata.htags.Data(:,3);
         anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
         for i = anntIdx
             gdata.annotations(i).digits = val;
@@ -225,8 +232,8 @@ function apply_Callback(hObject, eventdata)
         end
         
         % update tracks
-        gdata.htags.Data(:,1) = {val};
-        tagid = gdata.htags.Data(:,2);
+        gdata.htags.Data(:,2) = {val};
+        tagid = gdata.htags.Data(:,3);
         anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
         for i = anntIdx
             gdata.annotations(i).trackid = val;
@@ -264,6 +271,17 @@ function exportdata_Callback(hObject, eventdata)
     writetable(x, fullfile(pathname, filename));
 end %exportdata_Callback
 
+function exportvid_Callback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    
+    % export
+    [filename, pathname] = uiputfile({'*.avi', 'Motion JPEG AVI (*.avi)'; ...
+                           '*.mp4', 'MPEG-4 (*.mp4)'},'Export Video', ...
+                           gdata.outpath);
+    tagvidgen(gdata.annotations, gdata.vid, fullfile(pathname, filename));
+end %exportvid_Callback
+
 function quit_Callback(hObject, eventdata)
     % get data
     gdata = guidata(hObject);
@@ -273,16 +291,24 @@ function quit_Callback(hObject, eventdata)
 end %quit_Callback
 
 function data = tracks2cell(x, t)
+    % get index of track set
     idx = ismember([x.trackid], t);
+    
+    % convert to cell array
     data = struct2cell(x(idx));
-    data = squeeze(data([17, 3, 5, 8, 8, 12], :, :))';
-    data(:,4) = arrayfun(@(y) {y{:}(1)}, data(:,4));
-    data(:,5) = arrayfun(@(y) {y{:}(2)}, data(:,5));
+    
+    % get necessary columns (10 - istag; 16 - track; 3 - tagid; 5 - time; 
+    % 8 - centroid; 11 - digits)
+    data = squeeze(data([10, 16, 3, 5, 8, 8, 11], :, :))';
+    
+    % split centroids to x and y
+    data(:,5) = arrayfun(@(y) {y{:}(1)}, data(:,5));
+    data(:,6) = arrayfun(@(y) {y{:}(2)}, data(:,6));
 end %tracks2cell
 
 function showframe(idx, gdata)
     % get data
-    [tagid, time] = gdata.htags.Data{idx,2:3};
+    [istag, tagid, time] = gdata.htags.Data{idx,[1, 3:4]};
     
     % get data for frame
     framedata = gdata.annotations([gdata.annotations.time] == time);
@@ -295,7 +321,11 @@ function showframe(idx, gdata)
     frame = readFrame(gdata.vid);
     
     % add bboxes
-    frame = insertShape(frame,'rectangle', framedata(idx).bbox, 'Color', 'green');
+    if istag
+        frame = insertShape(frame,'rectangle', framedata(idx).bbox, 'Color', 'green');
+    else
+        frame = insertShape(frame,'rectangle', framedata(idx).bbox, 'Color', 'red');
+    end
     frame = insertShape(frame,'rectangle', vertcat(framedata(~idx).bbox), 'Color', 'yellow');
     
     % display
