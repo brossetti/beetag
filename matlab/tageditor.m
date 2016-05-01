@@ -72,7 +72,8 @@ hsave = uicontrol(peditor,'Style','pushbutton', 'String', 'Save', ...
         'Units', 'normalized', 'Position',[0.01 0.5050 0.98 0.155], ...
         'Callback', @save_Callback);
 hexportdata = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Data', ...
-              'Units', 'normalized', 'Position',[0.01 0.34 0.98 0.155]);
+              'Units', 'normalized', 'Position',[0.01 0.34 0.98 0.155], ...
+              'Callback', @exportdata_Callback);
 hexportmov = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Movie', ...
              'Units', 'normalized', 'Position',[0.01 0.175 0.98 0.155]);
 hquit = uicontrol(peditor,'Style','pushbutton', 'String', 'Quit', ...
@@ -86,7 +87,6 @@ gdata.outpath = outpath;
 gdata.vid = vid;
 gdata.axvid = axvid;
 gdata.tracks = tracks;
-gdata.tracknames = tracknames;
 gdata.htracks = htracks;
 gdata.htags = htags;
 gdata.htoggle = htoggle;
@@ -174,8 +174,7 @@ function tags_EditCallback(hObject, eventdata)
         
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
-        gdata.tracknames = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
-        gdata.htracks.String = gdata.tracknames;
+        gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
     end
     
     % reassign guidata
@@ -216,8 +215,7 @@ function apply_Callback(hObject, eventdata)
         anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
         for i = anntIdx
             gdata.annotations(i).digits = val;
-        end
-        
+        end   
     else
         val = str2double(val);
         % check format
@@ -235,9 +233,7 @@ function apply_Callback(hObject, eventdata)
         
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
-        gdata.tracknames = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
-        gdata.htracks.String = gdata.tracknames;
-        
+        gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);        
     end
     
     % reassign guidata
@@ -252,6 +248,20 @@ function save_Callback(hObject, eventdata)
     % save annotation file
     save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
 end %save_Callback
+
+function exportdata_Callback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    
+    % convert to table
+    x = struct2table(gdata.annotations);
+    
+    % export
+    [filename, pathname] = uiputfile({'*.xls', 'Excel File (*.xls)'; ...
+                           '*.csv', 'Text File (*.csv)'},'Export Data', ...
+                           gdata.outpath);
+    writetable(x, fullfile(pathname, filename));
+end %exportdata_Callback
 
 function quit_Callback(hObject, eventdata)
     % get data
