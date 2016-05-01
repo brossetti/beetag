@@ -22,7 +22,7 @@ for i = 1:length(annotations)
     % check if img is a tag
     if isempty(img)
         annotations(i).istag = false;
-        annotations(i).digits = [];
+        annotations(i).digits = '';
         annotations(i).orientation = [];
         annotations(i).confidence = [];
         annotations(i).digitbboxes = [];

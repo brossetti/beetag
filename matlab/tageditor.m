@@ -1,8 +1,6 @@
-function tageditor(annotations, vid)
-
-% SIMPLE_GUI2 Select a data set from the pop-up menu, then
-% click one of the plot-type push buttons. Clicking the button
-% plots the selected data in the axes.
+function tageditor(annotations, vid, outpath)
+% TAGEDITOR Editor for bee tag annotations
+% Allows the manipulation of bee tag annotation files
 
 %  set figure dimensions
 set(0,'units','pixels');
@@ -48,20 +46,51 @@ htags = uitable(ptags, 'Data', tagdata, ...
         'RowName', [], ...
         'ColumnName', {'Track', 'Tag', 'Time', 'X', 'Y', 'Digits'}, ...
         'ColumnEditable', logical([1 0 0 0 0 1]), ...
-        'CellSelectionCallback', @tags_SelectionCallback);
+        'CellSelectionCallback', @tags_SelectionCallback, ...
+        'CellEditCallback', @tags_EditCallback);
 
 wtable = htags.Extent(3)*f.Position(3); 
 htags.ColumnWidth = {floor(wtable/size(tagdata,2))-1};
 
+% add editor controls
+htoggle(1) = uicontrol(peditor, 'Style', 'togglebutton', ...
+            'String', 'Tracks', ...
+            'Units', 'normalized', 'Position', [0.01, 0.89, 0.49, 0.1], ...
+            'Value', 0, ...
+            'Callback', @toggle_Callback);
+htoggle(2) = uicontrol(peditor, 'Style', 'togglebutton', ...
+            'String', 'Digits', ...
+            'Units', 'normalized', 'Position', [0.5, 0.89, 0.49, 0.1], ...
+            'Value', 1, ...
+            'Callback', @toggle_Callback);
+htxtbox = uicontrol(peditor,'Style','edit',...
+          'Units', 'normalized', 'Position',[0.01 0.835 0.98 0.055]);
+happly = uicontrol(peditor,'Style','pushbutton', 'String', 'Apply', ...
+         'Units', 'normalized', 'Position',[0.01 0.67 0.98 0.155], ...
+         'Callback', @apply_Callback);
+hsave = uicontrol(peditor,'Style','pushbutton', 'String', 'Save', ...
+        'Units', 'normalized', 'Position',[0.01 0.5050 0.98 0.155], ...
+        'Callback', @save_Callback);
+hexportdata = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Data', ...
+              'Units', 'normalized', 'Position',[0.01 0.34 0.98 0.155]);
+hexportmov = uicontrol(peditor,'Style','pushbutton', 'String', 'Export Movie', ...
+             'Units', 'normalized', 'Position',[0.01 0.175 0.98 0.155]);
+hquit = uicontrol(peditor,'Style','pushbutton', 'String', 'Quit', ...
+        'Units', 'normalized', 'Position',[0.01 0.01 0.98 0.155], ...
+        'Callback', @quit_Callback);
+        
 % store gui data
+gdata.f = f;
 gdata.annotations = annotations;
+gdata.outpath = outpath;
 gdata.vid = vid;
 gdata.axvid = axvid;
 gdata.tracks = tracks;
 gdata.tracknames = tracknames;
 gdata.htracks = htracks;
-gdata.tagdata = tagdata;
 gdata.htags = htags;
+gdata.htoggle = htoggle;
+gdata.htxtbox = htxtbox;
 guidata(f, gdata);
 
 % add video frame
@@ -79,9 +108,11 @@ function tracks_Callback(hObject, eventdata)
     gdata = guidata(hObject);
     idx = hObject.Value;
     
+    % convert index to trackid
+    trackid = gdata.tracks(idx);
+    
     % create/display new table
-    gdata.tagdata = tracks2cell(gdata.annotations, idx);
-    gdata.htags.Data = gdata.tagdata;
+    gdata.htags.Data = tracks2cell(gdata.annotations, trackid);
     
     % display first video frame
     showframe(1, gdata);
@@ -105,7 +136,130 @@ function tags_SelectionCallback(hObject, eventdata)
     
     % reassign guidata
     guidata(hObject, gdata);
-end %tags_Callback
+end %tags_SelectionCallback
+
+function tags_EditCallback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    idx = eventdata.Indices;
+    val = eventdata.NewData;
+    r = idx(1,1);
+    c = idx(1,2);
+    
+    % check which column editted (6 - digits; 1 - track)
+    if c == 6
+        % check format
+        if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
+            % reset previous value
+            hObject.Data{r,c} = eventdata.PreviousData;
+            return
+        end
+        
+        % update digits
+        tagid = hObject.Data{r,2};
+        anntIdx = strcmp(tagid, {gdata.annotations.tagid});
+        gdata.annotations(anntIdx).digits = val;
+    else
+        % check format
+        if ~isnumeric(val) || int64(val) ~= val || val < 1
+            % reset previous value
+            hObject.Data{r,c} = eventdata.PreviousData;
+            return
+        end
+        
+        % update track
+        tagid = hObject.Data{r,2};
+        anntIdx = strcmp(tagid, {gdata.annotations.tagid});
+        gdata.annotations(anntIdx).trackid = val;
+        
+        % update track listbox
+        gdata.tracks = unique([gdata.annotations.trackid]);
+        gdata.tracknames = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
+        gdata.htracks.String = gdata.tracknames;
+    end
+    
+    % reassign guidata
+    guidata(hObject, gdata);
+end %tags_EditCallback
+
+function toggle_Callback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    
+    % get index of hot toggle
+    idx = gdata.htoggle ~= hObject;
+    
+    % toggle
+    hObject.Value = 1;
+    gdata.htoggle(idx).Value = 0;
+    
+    % reassign guidata
+    guidata(hObject, gdata);
+end %toggle_Callback
+
+function apply_Callback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    val = gdata.htxtbox.String;
+    x = gdata.annotations;
+   
+    % check which apply function (0 - digits; 1 - tracks)
+    if gdata.htoggle(1).Value == 0
+        % check format
+        if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
+            return
+        end
+        
+        % update digits
+        gdata.htags.Data(:,6) = {val};
+        tagid = gdata.htags.Data(:,2);
+        anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
+        for i = anntIdx
+            gdata.annotations(i).digits = val;
+        end
+        
+    else
+        val = str2double(val);
+        % check format
+        if isempty(val) || int64(val) ~= val || val < 1
+            return
+        end
+        
+        % update tracks
+        gdata.htags.Data(:,1) = {val};
+        tagid = gdata.htags.Data(:,2);
+        anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
+        for i = anntIdx
+            gdata.annotations(i).trackid = val;
+        end
+        
+        % update track listbox
+        gdata.tracks = unique([gdata.annotations.trackid]);
+        gdata.tracknames = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
+        gdata.htracks.String = gdata.tracknames;
+        
+    end
+    
+    % reassign guidata
+    guidata(hObject, gdata);
+end %apply_Callback
+
+function save_Callback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    annotations = gdata.annotations;
+    
+    % save annotation file
+    save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+end %save_Callback
+
+function quit_Callback(hObject, eventdata)
+    % get data
+    gdata = guidata(hObject);
+    
+    % close figure window
+    close(gdata.f);
+end %quit_Callback
 
 function data = tracks2cell(x, t)
     idx = ismember([x.trackid], t);
@@ -117,7 +271,7 @@ end %tracks2cell
 
 function showframe(idx, gdata)
     % get data
-    [tagid, time] = gdata.tagdata{idx,2:3};
+    [tagid, time] = gdata.htags.Data{idx,2:3};
     
     % get data for frame
     framedata = gdata.annotations([gdata.annotations.time] == time);

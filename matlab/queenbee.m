@@ -50,7 +50,7 @@ else
 end
 
 %% Filter/Process Results
-if isfield(annotations, 'trackid') && ~force && false
+if isfield(annotations, 'trackid') && ~force
     disp('Track ID exists')
 else
     disp('Filtering results...');
@@ -59,7 +59,7 @@ end
 
 %% Tag Editor
 disp('Starting tag editor...');
-tageditor(annotations, ppvid);
+tageditor(annotations, ppvid, path);
 
 
 end
