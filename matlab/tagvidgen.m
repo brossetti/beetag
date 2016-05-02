@@ -15,8 +15,16 @@ clear colors;
 times = unique([data.time]);
 
 % create new video file and open
-outvid = VideoWriter(outpath);
+[~, ~, ext] = fileparts(outpath);
+if strcmpi(ext, '.mp4')
+    profile = 'MPEG-4';
+else
+    profile = 'Motion JPEG AVI';
+end
+outvid = VideoWriter(outpath, profile);
+outvid.FrameRate = 24;
 open(outvid);
+
 
 % loop over times
 for i = times

@@ -93,6 +93,8 @@ gdata.htracks = htracks;
 gdata.htags = htags;
 gdata.htoggle = htoggle;
 gdata.htxtbox = htxtbox;
+gdata.hexportdata = hexportdata;
+gdata.hexportvid = hexportvid;
 gdata.times = unique([0, annotations.time]);
 guidata(f, gdata);
 
@@ -162,6 +164,9 @@ function tags_EditCallback(hObject, eventdata)
         tagid = hObject.Data{r,3};
         anntIdx = strcmp(tagid, {gdata.annotations.tagid});
         gdata.annotations(anntIdx).digits = val;
+        
+        % remove confidence values
+        gdata.annotations(anntIdx).confidence = NaN;
     elseif c == 2
         % check format
         if ~isnumeric(val) || int64(val) ~= val || val < 1
@@ -217,12 +222,13 @@ function apply_Callback(hObject, eventdata)
             return
         end
         
-        % update digits
+        % update digits and remove confidence values
         gdata.htags.Data(:,7) = {val};
         tagid = gdata.htags.Data(:,3);
         anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
         for i = anntIdx
             gdata.annotations(i).digits = val;
+            gdata.annotations(i).confidence = NaN;
         end   
     else
         val = str2double(val);
@@ -261,6 +267,9 @@ function exportdata_Callback(hObject, eventdata)
     % get data
     gdata = guidata(hObject);
     
+    % change button color to red
+    gdata.hexportdata.BackgroundColor = [1 0 0];
+    
     % convert to table
     x = struct2table(gdata.annotations);
     
@@ -269,17 +278,26 @@ function exportdata_Callback(hObject, eventdata)
                            '*.csv', 'Text File (*.csv)'},'Export Data', ...
                            gdata.outpath);
     writetable(x, fullfile(pathname, filename));
+    
+    % revert button color
+    gdata.hexportdata.BackgroundColor = [0.94 0.94 0.94];
 end %exportdata_Callback
 
 function exportvid_Callback(hObject, eventdata)
     % get data
     gdata = guidata(hObject);
     
+    % change button color to red
+    gdata.hexportvid.BackgroundColor = [1 0 0];
+    
     % export
     [filename, pathname] = uiputfile({'*.avi', 'Motion JPEG AVI (*.avi)'; ...
                            '*.mp4', 'MPEG-4 (*.mp4)'},'Export Video', ...
                            gdata.outpath);
     tagvidgen(gdata.annotations, gdata.vid, fullfile(pathname, filename));
+    
+    % revert button color
+    gdata.hexportvid.BackgroundColor = [0.94 0.94 0.94];
 end %exportvid_Callback
 
 function quit_Callback(hObject, eventdata)
