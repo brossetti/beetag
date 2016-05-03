@@ -22,7 +22,7 @@ else
     profile = 'Motion JPEG AVI';
 end
 outvid = VideoWriter(outpath, profile);
-outvid.FrameRate = 24;
+outvid.FrameRate = 15;
 open(outvid);
 
 

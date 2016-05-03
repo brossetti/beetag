@@ -183,6 +183,9 @@ function tags_EditCallback(hObject, eventdata)
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
         gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
+        if gdata.htracks.Value(end) > length(gdata.tracks)
+            gdata.htracks.Value = length(gdata.tracks);
+        end
     else
         % update istag
         tagid = hObject.Data{r,3};
@@ -247,7 +250,10 @@ function apply_Callback(hObject, eventdata)
         
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
-        gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);        
+        gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
+        if gdata.htracks.Value(end) > length(gdata.tracks)
+            gdata.htracks.Value = length(gdata.tracks);
+        end
     end
     
     % reassign guidata
