@@ -55,13 +55,18 @@ htags.ColumnWidth = {floor(wtable/size(tagdata,2))};
 
 % add editor controls
 htoggle(1) = uicontrol(peditor, 'Style', 'togglebutton', ...
-            'String', 'Tracks', ...
-            'Units', 'normalized', 'Position', [0.01, 0.89, 0.49, 0.1], ...
+            'String', 'Tags', ...
+            'Units', 'normalized', 'Position', [0.01, 0.89, 0.32, 0.1], ...
             'Value', 0, ...
             'Callback', @toggle_Callback);
 htoggle(2) = uicontrol(peditor, 'Style', 'togglebutton', ...
+            'String', 'Tracks', ...
+            'Units', 'normalized', 'Position', [0.34, 0.89, 0.32, 0.1], ...
+            'Value', 0, ...
+            'Callback', @toggle_Callback);
+htoggle(3) = uicontrol(peditor, 'Style', 'togglebutton', ...
             'String', 'Digits', ...
-            'Units', 'normalized', 'Position', [0.5, 0.89, 0.49, 0.1], ...
+            'Units', 'normalized', 'Position', [0.67, 0.89, 0.32, 0.1], ...
             'Value', 1, ...
             'Callback', @toggle_Callback);
 htxtbox = uicontrol(peditor,'Style','edit',...
@@ -207,11 +212,13 @@ function toggle_Callback(hObject, eventdata)
     gdata = guidata(hObject);
     
     % get index of hot toggle
-    idx = gdata.htoggle ~= hObject;
+    idx = find(gdata.htoggle ~= hObject);
     
     % toggle
     hObject.Value = 1;
-    gdata.htoggle(idx).Value = 0;
+    for i = idx
+        gdata.htoggle(i).Value = 0;
+    end
     
     % reassign guidata
     guidata(hObject, gdata);
@@ -223,22 +230,26 @@ function apply_Callback(hObject, eventdata)
     val = gdata.htxtbox.String;
     x = gdata.annotations;
    
-    % check which apply function (0 - digits; 1 - tracks)
-    if gdata.htoggle(1).Value == 0
+    % check which apply function (1 - tags; 2- tracks; 3 - digits)
+    if gdata.htoggle(1).Value == 1
         % check format
-        if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
-            return
+        switch lower(val)
+            case {'0', 'false'}
+                val = false;
+            case {'1', 'true'}
+                val = true;
+            otherwise
+                return
         end
         
-        % update digits and remove confidence values
-        gdata.htags.Data(:,7) = {val};
+        % update istag
+        gdata.htags.Data(:,1) = {val};
         tagid = gdata.htags.Data(:,3);
         anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
         for i = anntIdx
-            gdata.annotations(i).digits = val;
-            gdata.annotations(i).confidence = NaN;
-        end   
-    else
+            gdata.annotations(i).istag = val;
+        end
+    elseif gdata.htoggle(2).Value == 1
         val = str2double(val);
         % check format
         if isempty(val) || int64(val) ~= val || val < 1
@@ -259,7 +270,21 @@ function apply_Callback(hObject, eventdata)
         if gdata.htracks.Value(end) > length(gdata.tracks)
             gdata.htracks.Value = length(gdata.tracks);
         end
-    end
+    else
+        % check format
+        if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
+            return
+        end
+        
+        % update digits and remove confidence values
+        gdata.htags.Data(:,7) = {val};
+        tagid = gdata.htags.Data(:,3);
+        anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
+        for i = anntIdx
+            gdata.annotations(i).digits = val;
+            gdata.annotations(i).confidence = NaN;
+        end 
+    end %if-elseif
     
     % set as unsaved
     gdata.unsaved = true;
