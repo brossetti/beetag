@@ -93,9 +93,11 @@ gdata.htracks = htracks;
 gdata.htags = htags;
 gdata.htoggle = htoggle;
 gdata.htxtbox = htxtbox;
+gdata.hsave = hsave;
 gdata.hexportdata = hexportdata;
 gdata.hexportvid = hexportvid;
 gdata.times = unique([0, annotations.time]);
+gdata.unsaved = false;
 guidata(f, gdata);
 
 % add video frame
@@ -193,6 +195,9 @@ function tags_EditCallback(hObject, eventdata)
         gdata.annotations(anntIdx).istag = val;
     end %if-elseif
     
+    % set as unsaved
+    gdata.unsaved = true;
+    
     % reassign guidata
     guidata(hObject, gdata);
 end %tags_EditCallback
@@ -256,6 +261,9 @@ function apply_Callback(hObject, eventdata)
         end
     end
     
+    % set as unsaved
+    gdata.unsaved = true;
+    
     % reassign guidata
     guidata(hObject, gdata);
 end %apply_Callback
@@ -265,8 +273,17 @@ function save_Callback(hObject, eventdata)
     gdata = guidata(hObject);
     annotations = gdata.annotations;
     
+    % change button color to red
+    gdata.hsave.BackgroundColor = [1 0 0];
+    
     % save annotation file
     save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+    
+    % set as saved
+    gdata.unsaved = false;
+    
+    % revert button color
+    gdata.hsave.BackgroundColor = [0.94 0.94 0.94];
 end %save_Callback
 
 function exportdata_Callback(hObject, eventdata)
@@ -283,7 +300,9 @@ function exportdata_Callback(hObject, eventdata)
     [filename, pathname] = uiputfile({'*.xls', 'Excel File (*.xls)'; ...
                            '*.csv', 'Text File (*.csv)'},'Export Data', ...
                            gdata.outpath);
-    writetable(x, fullfile(pathname, filename));
+    if filename                   
+        writetable(x, fullfile(pathname, filename));
+    end
     
     % revert button color
     gdata.hexportdata.BackgroundColor = [0.94 0.94 0.94];
@@ -300,7 +319,9 @@ function exportvid_Callback(hObject, eventdata)
     [filename, pathname] = uiputfile({'*.avi', 'Motion JPEG AVI (*.avi)'; ...
                            '*.mp4', 'MPEG-4 (*.mp4)'},'Export Video', ...
                            gdata.outpath);
-    tagvidgen(gdata.annotations, gdata.vid, fullfile(pathname, filename));
+    if filename
+        tagvidgen(gdata.annotations, gdata.vid, fullfile(pathname, filename));
+    end
     
     % revert button color
     gdata.hexportvid.BackgroundColor = [0.94 0.94 0.94];
@@ -309,6 +330,22 @@ end %exportvid_Callback
 function quit_Callback(hObject, eventdata)
     % get data
     gdata = guidata(hObject);
+    
+    % check for changes
+    if gdata.unsaved
+        choice = questdlg('Would you like to save your changes?', ...
+                 'Quit', ...
+                 'Don''t Save', 'Cancel', 'Save', 'Save');
+        
+        switch choice
+            case 'Cancel'
+                return
+            case 'Save'
+                % save annotation file
+                annotations = gdata.annotations;
+                save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+        end %switch
+    end %if
     
     % close figure window
     close(gdata.f);

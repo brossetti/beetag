@@ -11,8 +11,8 @@ stime = vid.CurrentTime;
 [~,name, ~] = fileparts(vid.Name);
 
 %% Video Output
-ppvidpath = fullfile(outpath,[name '_preprocessed.avi']);
-ppvid = VideoWriter(ppvidpath,'Uncompressed AVI');
+ppvidpath = fullfile(outpath,[name '_preprocessed.mj2']);
+ppvid = VideoWriter(ppvidpath,'Archival');
 
 %% Calcualte Active Region
 

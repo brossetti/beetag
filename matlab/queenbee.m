@@ -43,7 +43,7 @@ vid = VideoReader(filepath, 'CurrentTime', stime);
 etime = vid.Duration - etime;
 
 %% Preprocess Video
-ppvidpath = fullfile(outpath, [name '_preprocessed.avi']);
+ppvidpath = fullfile(outpath, [name '_preprocessed.mj2']);
 backgroundpath = fullfile(outpath, [name '_background.png']);
 if exist(ppvidpath, 'file') && exist(backgroundpath, 'file') && ~force
     disp('Preprocessed video and background image exist');
