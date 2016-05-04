@@ -52,7 +52,20 @@ if exist(ppvidpath, 'file') && exist(backgroundpath, 'file') && ~force
     
     disp('- getting background image...');
     background = imread(backgroundpath);
-else
+elseif exist(backgroundpath, 'file') && ~force
+    disp('No preprocessed video, but background image exist');
+    disp('- getting background image...');
+    background = imread(backgroundpath);
+    
+    disp('- checking if dimensions match...');
+    if size(background) == vid.Size
+        disp('- using raw video...');
+        ppvid = vid;
+    else
+        disp('- preprocessing video and regenerating background image...');
+        [ppvid, background] = vidpreproc(vid, etime, outpath);
+    end
+else    
     disp('Preprocessing video and generating background image...');
     [ppvid, background] = vidpreproc(vid, etime, outpath);
 end

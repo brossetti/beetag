@@ -10,10 +10,6 @@ legacy = verLessThan('matlab', '9.0');
 stime = vid.CurrentTime;
 [~,name, ~] = fileparts(vid.Name);
 
-%% Video Output
-ppvidpath = fullfile(outpath,[name '_preprocessed.mj2']);
-ppvid = VideoWriter(ppvidpath,'Archival');
-
 %% Calcualte Active Region
 
 % calculate mean and background
@@ -60,20 +56,32 @@ stats = regionprops(mask,'Area', 'BoundingBox');
 bbox = round(stats(idx).BoundingBox);
 
 %% Extract Active Region
-open(ppvid)
-while hasFrame(vid) && vid.CurrentTime <= etime
-    frame = readFrame(vid);
-    writeVideo(ppvid, frame(bbox(2):bbox(4),:,:))
-end
-close(ppvid)
+if bbox(4)/size(varImg,1) < 0.05 || bbox(4)/size(varImg,1) > 0.99
+    % create preprocessed video
+    ppvidpath = fullfile(outpath,[name '_preprocessed.mj2']);
+    ppvid = VideoWriter(ppvidpath,'Archival');
+    open(ppvid)
+    while hasFrame(vid) && vid.CurrentTime <= etime
+        frame = readFrame(vid);
+        writeVideo(ppvid, frame(bbox(2):bbox(4),:,:))
+    end
+    close(ppvid)
 
-% reset CurrentTime
-vid.CurrentTime = stime;
+    % reset CurrentTime
+    vid.CurrentTime = stime;
 
-%% Define Background Image
-background = uint8(meanImg (bbox(2):bbox(4),:,:));
-imwrite(background, fullfile(outpath,[name '_background.png']));
-
-%% Get Preprocessed Video Handle
-ppvid = VideoReader(ppvidpath);
+    % define background image
+    background = uint8(meanImg(bbox(2):bbox(4),:,:));
+    imwrite(background, fullfile(outpath,[name '_background.png']));
+   
+    % get preprocessed video handle
+    ppvid = VideoReader(ppvidpath);
+else
+    % define background image
+    background = uint8(meanImg);
+    imwrite(background, fullfile(outpath,[name '_background.png']));
+    
+    % use raw video
+    ppvid = vid;
+end    
 
