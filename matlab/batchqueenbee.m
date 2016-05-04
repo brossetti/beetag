@@ -17,7 +17,7 @@ parfor i = 1:length(files)
        % run queenbee
        queenbee(files{i}, 10, 10, 'Output', rdir, 'Editor', false);
    catch
-       fprintf('%s failed\n', name);
+       fprintf('%s failed\n', files{i});
    end
 end
 end
