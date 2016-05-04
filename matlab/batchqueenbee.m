@@ -1,9 +1,10 @@
-function batchqueenbee(d)
+function batchqueenbee(d, ext)
 % This function runs queenbee for all avi files in a given directory or 
 % subdirectory
 
 % get all avi files
-files = getAllFiles(d);
+files = dirwalk(d);
+files = files(~cellfun(@isempty,regexp(files,[ext '$'])));
 
 % loop through files
 parfor i = 1:length(files)
@@ -16,26 +17,36 @@ parfor i = 1:length(files)
        % run queenbee
        queenbee(files{i}, 10, 10, 'Output', rdir, 'Editor', false);
    catch
-       disp('failed');
+       fprintf('%s failed\n', name);
    end
 end
 end
 
-function fileList = getAllFiles(dirName)
+function files = dirwalk(root)
 
-  dirData = dir(dirName);      %# Get the data for the current directory
-  dirIndex = [dirData.isdir];  %# Find the index for directories
-  fileList = {dirData(~dirIndex).name}';  %'# Get a list of the files
-  if ~isempty(fileList)
-    fileList = cellfun(@(x) fullfile(dirName,x),...  %# Prepend path to files
-                       fileList,'UniformOutput',false);
-  end
-  subDirs = {dirData(dirIndex).name};  %# Get a list of the subdirectories
-  validIndex = ~ismember(subDirs,{'.','..'});  %# Find index of subdirectories
-                                               %#   that are not '.' or '..'
-  for iDir = find(validIndex)                  %# Loop over valid subdirectories
-    nextDir = fullfile(dirName,subDirs{iDir});    %# Get the subdirectory path
-    fileList = [fileList; getAllFiles(nextDir)];  %# Recursively call getAllFiles
-  end
+% get contents of current directory
+dirData = dir(root);
+
+% find any subdirectories
+dirIndex = [dirData.isdir];
+
+% get list of files
+files = {dirData(~dirIndex).name}';
+
+% build full file paths
+if ~isempty(files)
+files = cellfun(@(x) fullfile(root,x),...  
+                   files,'UniformOutput',false);
+end
+
+% get list of subdirectories
+subDirs = {dirData(dirIndex).name}; 
+validIndex = ~ismember(subDirs,{'.','..'});
+
+% recursively call function to walk subdirectories
+for i = find(validIndex)
+    dirpath = fullfile(root, subDirs{i});
+    files = [files; dirwalk(dirpath)];
+end
 
 end
