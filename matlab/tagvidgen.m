@@ -3,6 +3,9 @@ function tagvidgen(annotations, vid, outpath)
 
 % remove non-tags
 data = annotations([annotations.istag]);
+if isempty(data)
+    return
+end
 
 % define track colors
 colors = lines(max([data.trackid]))*255;

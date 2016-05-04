@@ -25,11 +25,12 @@ f = figure('Visible','off','Position', fdims, 'Name', 'Tag Editor',...
     'NumberTitle','off', 'Toolbar', 'none');
 
 % set figure panels
-pvid = uipanel(f, 'Title', 'Video', 'Position', [0.005, 0.7+0.0025, 0.99, 0.3-0.0075]);
+pvid = uipanel(f, 'Position', [0.005, 0.7+0.0025, 0.99, 0.3-0.0075], 'BorderType', 'none');
 axvid = axes(pvid);
-ptags = uipanel(f, 'Title', 'Tags', 'Position', [0.005, 0.005, 0.7-0.0075, 0.7-0.0075]);
-ptracks = uipanel(f, 'Title', 'Tracks', 'Position', [0.7+0.0025, 0.005, 0.15-0.005, 0.7-0.0075]);
-peditor = uipanel(f, 'Title', 'Editor', 'Position', [0.85+0.0025, 0.005, 0.15-0.0075, 0.7-0.0075]);
+ptags = uipanel(f, 'Position', [0.005, 0.005, 0.7-0.0075, 0.7-0.0075], 'BorderType', 'none');
+ptracks = uipanel(f, 'Position', [0.7+0.0025, 0.005, 0.15-0.005, 0.7-0.0075], 'BorderType', 'none');
+peditor = uipanel(f, 'Position', [0.85+0.0025, 0.005, 0.15-0.0075, 0.7-0.0075], 'BorderType', 'none');
+
 
 % add tracks listbox
 tracks = unique([annotations.trackid]);
