@@ -41,12 +41,23 @@ for i = times
     % annotate each tag
     for j = idx
         % add mbr
-        frame = insertShape(frame,'rectangle', data(j).bbox, 'Color', data(j).color);
+        pts = data(j).mbr';
+        frame = insertShape(frame,'polygon', pts(:)', 'Color', data(j).color);
         
+        % add digits
+        frame = insertText(frame, data(j).bbox(1:2), data(j).digits, ...
+                'AnchorPoint','LeftBottom', 'TextColor', data(j).color, ...
+                'BoxOpacity', 0);
+
         % add path
         
         
     end
+    
+    % add timestamp
+    frame = insertText(frame, [1, size(frame,1)], ['Time: ' num2str(i)], ...
+            'AnchorPoint','LeftBottom', 'TextColor', 'white', ...
+            'BoxOpacity', 0, 'FontSize', 8);
     
     % write frame to video file
     writeVideo(outvid,frame)

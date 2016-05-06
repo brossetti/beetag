@@ -42,6 +42,10 @@ vid = VideoReader(filepath, 'CurrentTime', stime);
 % set end time
 etime = vid.Duration - etime;
 
+if stime > etime
+    error('start time must be before end time')
+end
+
 %% Preprocess Video
 ppvidpath = fullfile(outpath, [name '_preprocessed.mj2']);
 backgroundpath = fullfile(outpath, [name '_background.png']);
