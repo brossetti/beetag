@@ -1,5 +1,23 @@
 function tagvidgen(annotations, vid, outpath)
-%TAGVIDGEN Graphics generator for bee tag images
+%TAGVIDGEN Graphics generator for bee tag annotation files
+%   Generates a summary video that highlights tag annotations. The summary
+%   video only contains frames containing verified tags. Each frame is
+%   annotated with the tags minimum bounding rectangle, tag digits, and
+%   timestamp.
+%
+%   SYNTAX
+%   tagvidgen(annotations, vid, outpath)
+%
+%   DESCRIPTION
+%   tagvidgen(annotations, vid, outpath) specifies the annotations to
+%   summarize, the video handle to the video returned by vidpreproc.m, and
+%   the output video filename.
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
 % remove non-tags
 data = annotations([annotations.istag]);

@@ -1,8 +1,28 @@
 function tageditor(annotations, vid, outpath)
-% TAGEDITOR Editor for bee tag annotations
-% Allows the manipulation of bee tag annotation files
+% TAGEDITOR Bee tag annotation editor GUI
+%   Allows the manipulation of bee tag annotation files. The GUI provides
+%   access to the istag, trackid, and digits fields. The GUI has options to
+%   update the annotations.mat file, export a data file, and export a
+%   summary video.
+%
+%   SYNTAX
+%   tageditor(annotations, vid, outpath)
+%
+%   DESCRIPTION
+%   tageditor(annotations, vid, outpath) specifies the annotations files to
+%   update, the video handle to the video returned by vidpreproc.m, and the
+%   output directory to update annotations.mat.
+%
+%   DEPENDENCIES
+%   tagvidgen.m
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
-%  set figure dimensions
+% set figure dimensions
 set(0,'units','pixels');
 ss = get(0,'screensize');   % screen size
 sar = ss(4)/ss(3);          % screen aspect ratio
@@ -30,7 +50,6 @@ axvid = axes(pvid);
 ptags = uipanel(f, 'Position', [0.005, 0.005, 0.7-0.0075, 0.7-0.0075], 'BorderType', 'none');
 ptracks = uipanel(f, 'Position', [0.7+0.0025, 0.005, 0.15-0.005, 0.7-0.0075], 'BorderType', 'none');
 peditor = uipanel(f, 'Position', [0.85+0.0025, 0.005, 0.15-0.0075, 0.7-0.0075], 'BorderType', 'none');
-
 
 % add tracks listbox
 tracks = unique([annotations.trackid]);
@@ -112,7 +131,7 @@ showframe(1, gdata);
 % display initial state
 f.Visible = 'on';
 
-end
+end %main function
 
 %% Functions\Callbacks
 

@@ -1,8 +1,24 @@
-function [ image ] = extractregion( image, pts )
-%EXTRACTREGION Extracts region based on coordinates of bounding ellipse
-%   This function extracts a tag according to coordinates of its bounding
-%   ellipse. The coordinates should be a 4x2 matrix of (x,y) pairs starting
-%   at a long-axis vertex and moving clockwise to the next verticies.
+function [ image ] = extractregion(image, pts)
+%EXTRACTREGION Extracts region based on coordinates of bounding rectangle
+%   Extracts an image region according to coordinates of its bounding
+%   bounding rectangle. The extracted region is rotated to have its major
+%   or minor axis at 0 and 90 degrees. For rotated regions, bilinear
+%   interpolation is used to estimate bounded pixels values.
+%
+%   SYNTAX
+%   [ image ] = extractregion(image, pts)
+%
+%   DESCRIPTION
+%   [ image ] = extractregion(image, pts) extracts the regions specified by
+%   pts from the image. pts must be a 4x2 matrix with the x- and y-values
+%   corresponding to the first and second columns, respectively. The
+%   returned image only contains pixels information bounded by pts.
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
 % get image size
 [y, x, c] = size(image);
@@ -46,4 +62,5 @@ w = floor(max(w));
 h = floor(max(h));
 
 image = imwarp(image,tform,'bilinear', 'OutputView', imref2d([h, w]));
-end
+
+end %function

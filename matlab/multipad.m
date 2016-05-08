@@ -1,9 +1,23 @@
-function [ mat, pads ] = multipad( mat, m, fill )
+function [ mat, pads ] = multipad(mat, m, fill)
 %MULTIPAD Pads a 2D matrix to a given multiple
 %   Pads a matrix such that the dimensions satisfy the condition that they
 %   are a multiple of a given number. This function returns the padded
 %   matrix and a 1x4 matrix that specifies the pre row pad, post row pad,
 %   pre column pad, and post column pad.
+%
+%   SYNTAX
+%   [ mat, pads ] = multipad(mat, m, fill) 
+%
+%   DESCRIPTION
+%   [ mat, pads ] = multipad(mat, m, fill) specifies the input 2D matrix
+%   mat, the multiple m, and the fill value fill. The function returns a
+%   padded matrix mat and the size of the pad pads.
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
 [h,w] = size(mat);
 pads = zeros(1,4);

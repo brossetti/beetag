@@ -1,17 +1,26 @@
 function [ img, cropbbox ] = tagpreproc(img)
-%TAGPREPROC Bee tag preprocessing
-%   Cleans bee tag images for use in OCR
-plt = false;
-
-% display for testing
-if plt
-    close all
-    figure
-    row=1;
-    col=2;
-    subplot(row,col,1)
-    imshow(imresize(img, 10, 'nearest'))
-end
+%TAGPREPROC Bee tag image preprocessing
+%   Cleans bee tag images for use in OCR by tagocr.m. The input image is
+%   wavelet denoised, background subtracted, filtered, and isolated. The
+%   input image must be dark text on a light background. The output image
+%   is light text on a dark background.
+%
+%   SYNTAX
+%   [ img, cropbbox ] = tagpreproc(img)
+%
+%   DESCRIPTION
+%   [ img, cropbbox ] = tagpreproc(img) preprocesses tag images specified 
+%   as img for OCR. The preprocessed image is returned along with the
+%   coordinates for the digit bounding box specified as cropbbox.
+%
+%   DEPENDENCIES
+%   multipad.m
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
 % parameters
 RBR = 5;    %rolling ball radius
@@ -71,7 +80,7 @@ for i = 1:c
     
     % adjust intensities
     img(:,:,i) = imadjust(tmp);
-end
+end %for
 
 % sharpen
 img = imsharpen(img, 'Threshold', 0.7);
@@ -122,10 +131,4 @@ img = img(ccorr(2):ccorr(4),ccorr(1):ccorr(3));
 
 cropbbox = [ccorr(1:2), ccorr(3)-ccorr(1), ccorr(4)-ccorr(2)];
 
-% display
-if plt
-    subplot(row,col,2)
-    imshow(imresize(img, 10, 'nearest'))
-    pause(2)
-end
-end
+end %function
