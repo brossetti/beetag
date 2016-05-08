@@ -62,7 +62,7 @@ elseif exist(backgroundpath, 'file') && ~force
     background = imread(backgroundpath);
     
     disp('- checking if dimensions match...');
-    if size(background) == vid.Size
+    if size(background, 1) == vid.Height
         disp('- using raw video...');
         ppvid = vid;
     else

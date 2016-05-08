@@ -102,6 +102,11 @@ while hasFrame(vid)
             % extract region
             tag = extractregion(frame,rect(1:end-1,:));
             
+            % rotate to long edge
+            if size(tag, 1) > size(tag, 2)
+                tag = rot90(tag);
+            end
+            
             % get HOG features and classify as good, blurred, or bad
             features = extractHOGFeatures(imresize(tag, [30 60]), 'CellSize', [4 4]);
             class = predict(classifier, features);

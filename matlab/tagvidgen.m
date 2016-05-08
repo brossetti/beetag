@@ -47,11 +47,7 @@ for i = times
         % add digits
         frame = insertText(frame, data(j).bbox(1:2), data(j).digits, ...
                 'AnchorPoint','LeftBottom', 'TextColor', data(j).color, ...
-                'BoxOpacity', 0);
-
-        % add path
-        
-        
+                'BoxOpacity', 0); 
     end
     
     % add timestamp

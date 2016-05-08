@@ -3,7 +3,7 @@ function [ annotations ] = tagtracker(annotations, outpath)
 % 
 
 % parameters
-t = 0.25;
+t = 0.5;
 
 % remove preexisting trackid field
 if isfield(annotations, 'trackid')
