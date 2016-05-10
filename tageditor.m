@@ -1,8 +1,28 @@
 function tageditor(annotations, vid, outpath)
-% TAGEDITOR Editor for bee tag annotations
-% Allows the manipulation of bee tag annotation files
+% TAGEDITOR Bee tag annotation editor GUI
+%   Allows the manipulation of bee tag annotation files. The GUI provides
+%   access to the istag, trackid, and digits fields. The GUI has options to
+%   update the tag_annotations.mat file, export a data file, and export a
+%   summary video.
+%
+%   SYNTAX
+%   tageditor(annotations, vid, outpath)
+%
+%   DESCRIPTION
+%   tageditor(annotations, vid, outpath) specifies the annotations files to
+%   update, the video handle to the video returned by vidpreproc.m, and the
+%   output directory to update tag_annotations.mat.
+%
+%   DEPENDENCIES
+%   tagvidgen.m
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
-%  set figure dimensions
+% set figure dimensions
 set(0,'units','pixels');
 ss = get(0,'screensize');   % screen size
 sar = ss(4)/ss(3);          % screen aspect ratio
@@ -25,11 +45,11 @@ f = figure('Visible','off','Position', fdims, 'Name', 'Tag Editor',...
     'NumberTitle','off', 'Toolbar', 'none');
 
 % set figure panels
-pvid = uipanel(f, 'Title', 'Video', 'Position', [0.005, 0.7+0.0025, 0.99, 0.3-0.0075]);
+pvid = uipanel(f, 'Position', [0.005, 0.7+0.0025, 0.99, 0.3-0.0075], 'BorderType', 'none');
 axvid = axes(pvid);
-ptags = uipanel(f, 'Title', 'Tags', 'Position', [0.005, 0.005, 0.7-0.0075, 0.7-0.0075]);
-ptracks = uipanel(f, 'Title', 'Tracks', 'Position', [0.7+0.0025, 0.005, 0.15-0.005, 0.7-0.0075]);
-peditor = uipanel(f, 'Title', 'Editor', 'Position', [0.85+0.0025, 0.005, 0.15-0.0075, 0.7-0.0075]);
+ptags = uipanel(f, 'Position', [0.005, 0.005, 0.7-0.0075, 0.7-0.0075], 'BorderType', 'none');
+ptracks = uipanel(f, 'Position', [0.7+0.0025, 0.005, 0.15-0.005, 0.7-0.0075], 'BorderType', 'none');
+peditor = uipanel(f, 'Position', [0.85+0.0025, 0.005, 0.15-0.0075, 0.7-0.0075], 'BorderType', 'none');
 
 % add tracks listbox
 tracks = unique([annotations.trackid]);
@@ -55,13 +75,18 @@ htags.ColumnWidth = {floor(wtable/size(tagdata,2))};
 
 % add editor controls
 htoggle(1) = uicontrol(peditor, 'Style', 'togglebutton', ...
-            'String', 'Tracks', ...
-            'Units', 'normalized', 'Position', [0.01, 0.89, 0.49, 0.1], ...
+            'String', 'Tags', ...
+            'Units', 'normalized', 'Position', [0.01, 0.89, 0.32, 0.1], ...
             'Value', 0, ...
             'Callback', @toggle_Callback);
 htoggle(2) = uicontrol(peditor, 'Style', 'togglebutton', ...
+            'String', 'Tracks', ...
+            'Units', 'normalized', 'Position', [0.34, 0.89, 0.32, 0.1], ...
+            'Value', 0, ...
+            'Callback', @toggle_Callback);
+htoggle(3) = uicontrol(peditor, 'Style', 'togglebutton', ...
             'String', 'Digits', ...
-            'Units', 'normalized', 'Position', [0.5, 0.89, 0.49, 0.1], ...
+            'Units', 'normalized', 'Position', [0.67, 0.89, 0.32, 0.1], ...
             'Value', 1, ...
             'Callback', @toggle_Callback);
 htxtbox = uicontrol(peditor,'Style','edit',...
@@ -93,9 +118,11 @@ gdata.htracks = htracks;
 gdata.htags = htags;
 gdata.htoggle = htoggle;
 gdata.htxtbox = htxtbox;
+gdata.hsave = hsave;
 gdata.hexportdata = hexportdata;
 gdata.hexportvid = hexportvid;
 gdata.times = unique([0, annotations.time]);
+gdata.unsaved = false;
 guidata(f, gdata);
 
 % add video frame
@@ -104,7 +131,7 @@ showframe(1, gdata);
 % display initial state
 f.Visible = 'on';
 
-end
+end %main function
 
 %% Functions\Callbacks
 
@@ -183,12 +210,18 @@ function tags_EditCallback(hObject, eventdata)
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
         gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
+        if gdata.htracks.Value(end) > length(gdata.tracks)
+            gdata.htracks.Value = length(gdata.tracks);
+        end
     else
         % update istag
         tagid = hObject.Data{r,3};
         anntIdx = strcmp(tagid, {gdata.annotations.tagid});
         gdata.annotations(anntIdx).istag = val;
     end %if-elseif
+    
+    % set as unsaved
+    gdata.unsaved = true;
     
     % reassign guidata
     guidata(hObject, gdata);
@@ -199,11 +232,13 @@ function toggle_Callback(hObject, eventdata)
     gdata = guidata(hObject);
     
     % get index of hot toggle
-    idx = gdata.htoggle ~= hObject;
+    idx = find(gdata.htoggle ~= hObject);
     
     % toggle
     hObject.Value = 1;
-    gdata.htoggle(idx).Value = 0;
+    for i = idx
+        gdata.htoggle(i).Value = 0;
+    end
     
     % reassign guidata
     guidata(hObject, gdata);
@@ -215,22 +250,26 @@ function apply_Callback(hObject, eventdata)
     val = gdata.htxtbox.String;
     x = gdata.annotations;
    
-    % check which apply function (0 - digits; 1 - tracks)
-    if gdata.htoggle(1).Value == 0
+    % check which apply function (1 - tags; 2- tracks; 3 - digits)
+    if gdata.htoggle(1).Value == 1
         % check format
-        if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
-            return
+        switch lower(val)
+            case {'0', 'false'}
+                val = false;
+            case {'1', 'true'}
+                val = true;
+            otherwise
+                return
         end
         
-        % update digits and remove confidence values
-        gdata.htags.Data(:,7) = {val};
+        % update istag
+        gdata.htags.Data(:,1) = {val};
         tagid = gdata.htags.Data(:,3);
         anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
         for i = anntIdx
-            gdata.annotations(i).digits = val;
-            gdata.annotations(i).confidence = NaN;
-        end   
-    else
+            gdata.annotations(i).istag = val;
+        end
+    elseif gdata.htoggle(2).Value == 1
         val = str2double(val);
         % check format
         if isempty(val) || int64(val) ~= val || val < 1
@@ -247,8 +286,28 @@ function apply_Callback(hObject, eventdata)
         
         % update track listbox
         gdata.tracks = unique([gdata.annotations.trackid]);
-        gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);        
-    end
+        gdata.htracks.String = arrayfun(@(x) ['track ' num2str(x)], gdata.tracks, 'UniformOutput', false);
+        if gdata.htracks.Value(end) > length(gdata.tracks)
+            gdata.htracks.Value = length(gdata.tracks);
+        end
+    else
+        % check format
+        if (length(val) ~= 3) || ~all(isstrprop(val, 'digit'))
+            return
+        end
+        
+        % update digits and remove confidence values
+        gdata.htags.Data(:,7) = {val};
+        tagid = gdata.htags.Data(:,3);
+        anntIdx = find(ismember({gdata.annotations.tagid}, tagid));
+        for i = anntIdx
+            gdata.annotations(i).digits = val;
+            gdata.annotations(i).confidence = NaN;
+        end 
+    end %if-elseif
+    
+    % set as unsaved
+    gdata.unsaved = true;
     
     % reassign guidata
     guidata(hObject, gdata);
@@ -259,8 +318,17 @@ function save_Callback(hObject, eventdata)
     gdata = guidata(hObject);
     annotations = gdata.annotations;
     
+    % change button color to red
+    gdata.hsave.BackgroundColor = [1 0 0];
+    
     % save annotation file
     save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+    
+    % set as saved
+    gdata.unsaved = false;
+    
+    % revert button color
+    gdata.hsave.BackgroundColor = [0.94 0.94 0.94];
 end %save_Callback
 
 function exportdata_Callback(hObject, eventdata)
@@ -277,7 +345,9 @@ function exportdata_Callback(hObject, eventdata)
     [filename, pathname] = uiputfile({'*.xls', 'Excel File (*.xls)'; ...
                            '*.csv', 'Text File (*.csv)'},'Export Data', ...
                            gdata.outpath);
-    writetable(x, fullfile(pathname, filename));
+    if filename                   
+        writetable(x, fullfile(pathname, filename));
+    end
     
     % revert button color
     gdata.hexportdata.BackgroundColor = [0.94 0.94 0.94];
@@ -294,7 +364,9 @@ function exportvid_Callback(hObject, eventdata)
     [filename, pathname] = uiputfile({'*.avi', 'Motion JPEG AVI (*.avi)'; ...
                            '*.mp4', 'MPEG-4 (*.mp4)'},'Export Video', ...
                            gdata.outpath);
-    tagvidgen(gdata.annotations, gdata.vid, fullfile(pathname, filename));
+    if filename
+        tagvidgen(gdata.annotations, gdata.vid, fullfile(pathname, filename));
+    end
     
     % revert button color
     gdata.hexportvid.BackgroundColor = [0.94 0.94 0.94];
@@ -303,6 +375,22 @@ end %exportvid_Callback
 function quit_Callback(hObject, eventdata)
     % get data
     gdata = guidata(hObject);
+    
+    % check for changes
+    if gdata.unsaved
+        choice = questdlg('Would you like to save your changes?', ...
+                 'Quit', ...
+                 'Don''t Save', 'Cancel', 'Save', 'Save');
+        
+        switch choice
+            case 'Cancel'
+                return
+            case 'Save'
+                % save annotation file
+                annotations = gdata.annotations;
+                save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+        end %switch
+    end %if
     
     % close figure window
     close(gdata.f);

@@ -1,9 +1,25 @@
 function [ annotations ] = tagtracker(annotations, outpath)
-%TAGTRACKER Filters/processes tag annotations to define tracked trackects
-% 
+%TAGTRACKER Defines tag tracks and updates a tag annotations file
+%   Assigns tracks to sets of tag images listed in an annotations array
+%   structure. Tag tracks are determined by the euclidean distance between
+%   feature vectors of x- and y-coordinates and bounding box area.
+%
+%   SYNTAX
+%   [ annotations ] = tagtracker(annotations, outpath)
+%
+%   DESCRIPTION
+%   [ annotations ] = tagtracker(annotations, outpath) defines tag tracks
+%   in the specified annotations array structure and updates
+%   tag_annotations.mat in the specified outpath.
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
 % parameters
-t = 0.25;
+t = 0.5;
 
 % remove preexisting trackid field
 if isfield(annotations, 'trackid')

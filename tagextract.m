@@ -1,10 +1,34 @@
 function [ annotations ] = tagextract(vid, background, outpath)
-%TAGEXTRACT Detects and extracts bee tags from a preprocessed video
-%   Detailed explanation goes here
-close all
-plt = false;
+%TAGEXTRACT Detects and extracts bee tags regions from a video
+%   Detects and extracts bee tag regions from a video given a video handle
+%   and background image. A region detector is used to identifiy potential
+%   tag regions from the blue channel of background subtracted video 
+%   frames. A svm classifier and region properties are used to remove
+%   non-tag regions. Properly identified tags are extracted, saved to the
+%   tag directory, and relevant annotations are stored in a 
+%   tag_annotations.mat files and returned as an array structure.
+%
+%   SYNTAX
+%   [ annotations ] = tagextract(vid, background, outpath)
+%
+%   DESCRIPTION
+%   [ annotations ] = tagextract(vid, background, outpath) searches the
+%   video specified by the video handle vid for bee tags. The background 
+%   image specified by background is removed from each frame of vid. All
+%   output files are saved in the directory specified by outpath. An array
+%   structure is returned containing relevant information about any bee
+%   tags.
+%
+%   DEPENDENCIES
+%   classifier.mat
+%
+%   AUTHOR
+%   Blair J. Rossetti
+%
+%   DATE LAST MODIFIED
+%   2016-05-10
 
-% setup output directory
+% set output directory
 [status, ~] = mkdir(outpath, 'tags');
 if ~status
     annotations = false;
@@ -17,10 +41,9 @@ load('classifier.mat');
 % get video information
 [~, vidName, ~] = fileparts(vid.Name);
 
-% detect MSER regions.
+% detect MSER regions
 numFrames = 1;
 numTags = 1;
-% background = background(:,:,3);
 background = rgb2gray(background);
 
 while hasFrame(vid)
@@ -30,17 +53,7 @@ while hasFrame(vid)
     % read frame and remove background
     frame = readFrame(vid);
     gframe = imadjust(frame(:,:,3));
-%     gframe = imadjust(rgb2gray(frame));
     gframebg = gframe - background;
-%     gframebg = gframe - (2*background./3);
-%     gframebg = imabsdiff(double(gframe), background) ;
-    
-    if plt
-        subplot(3,1,1)
-        imshow(frame)
-        subplot(3,1,2)
-        imshow(gframebg,[])
-    end
     
     % detect MSER regions
     [mserRegions, mserConnComp] = detectMSERFeatures(gframebg,...
@@ -69,8 +82,8 @@ while hasFrame(vid)
         
         % remove overlapping regions
         if ~isempty(mserRegions)
-            [~,~,bbIdx] = selectStrongestBbox(cell2mat({mserStats.BoundingBox}'),(1./[mserStats.ConvexArea])',...
-                'OverlapThreshold', 0.3);
+            [~,~,bbIdx] = selectStrongestBbox(cell2mat({mserStats.BoundingBox}'), ...
+                (1./[mserStats.ConvexArea])', 'OverlapThreshold', 0.3);
             mserRegions = mserRegions(bbIdx);
             mserStats = mserStats(bbIdx);
         end
@@ -102,16 +115,16 @@ while hasFrame(vid)
             % extract region
             tag = extractregion(frame,rect(1:end-1,:));
             
+            % rotate to long edge
+            if size(tag, 1) > size(tag, 2)
+                tag = rot90(tag);
+            end
+            
             % get HOG features and classify as good, blurred, or bad
             features = extractHOGFeatures(imresize(tag, [30 60]), 'CellSize', [4 4]);
             class = predict(classifier, features);
-            switch class
-                case 1
-                    blurred = false;
-                case 2
-                    blurred = true;
-                case 3
-                    continue
+            if class == 3
+                continue
             end
             
             % save tag
@@ -129,28 +142,11 @@ while hasFrame(vid)
             annotations(numTags).bbox = mserStats(i).BoundingBox;   %#ok<AGROW>
             annotations(numTags).centroid = mserStats(i).Centroid;  %#ok<AGROW>
             annotations(numTags).area = mserStats(i).Area;          %#ok<AGROW>
-%             annotations(numTags).blurred = blurred;                 %#ok<AGROW>
-
-            
-            if plt
-                subplot(3,1,2)
-                hold on
-                plot(mserRegions, 'showPixelList', true,'showEllipses',false)
-                plot(rect(:,1),rect(:,2),'r')
-                hold off
-                subplot(3,1,3)
-                imshow(tag)
-                pause(0.001)
-            end
             
             % increment tag counter
             numTags = numTags + 1;
         end %for
     end %if
-   
-    if plt
-        pause(0.001)
-    end
     
     % increment frame counter
     numFrames = numFrames + 1;
@@ -160,4 +156,3 @@ end %while
 save(fullfile(outpath, 'tags', 'tag_annotations.mat'), 'annotations');
 
 end %function
-
