@@ -5,8 +5,8 @@ function [ annotations ] = tagextract(vid, background, outpath)
 %   tag regions from the blue channel of background subtracted video 
 %   frames. A svm classifier and region properties are used to remove
 %   non-tag regions. Properly identified tags are extracted, saved to the
-%   tag directory, and relevant annotations are stored in a annotations.mat
-%   files and returned as an array structure.
+%   tag directory, and relevant annotations are stored in a 
+%   tag_annotations.mat files and returned as an array structure.
 %
 %   SYNTAX
 %   [ annotations ] = tagextract(vid, background, outpath)

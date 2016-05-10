@@ -13,7 +13,8 @@ function [ annotations ] = tagocr(annotations, outpath)
 %   specified in annotations, preprocesses each image, and determines the
 %   most likely three digits. A new annotations array structure is returned
 %   with ocr fields (istag, digits, orientation, confidence, digit bounding
-%   boxes, and crop bounding box), and the annotations.mat files is updated.
+%   boxes, and crop bounding box), and the tag_annotations.mat files is 
+%   updated.
 %
 %   DEPENDENCIES
 %   ./tessdata, tagpreproc.m, multipad.m, tag image files
@@ -35,7 +36,6 @@ for i = 1:length(annotations)
     
     % preprocess
     [img, cropbbox] = tagpreproc(img);
-%     imwrite(img, fullfile('/Users/blair/Desktop/bee/_TrainingVideos/MVI_9621_tags/clean/',[name '.tif']));
     
     % check if img is a tag
     if isempty(img)

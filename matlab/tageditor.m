@@ -2,7 +2,7 @@ function tageditor(annotations, vid, outpath)
 % TAGEDITOR Bee tag annotation editor GUI
 %   Allows the manipulation of bee tag annotation files. The GUI provides
 %   access to the istag, trackid, and digits fields. The GUI has options to
-%   update the annotations.mat file, export a data file, and export a
+%   update the tag_annotations.mat file, export a data file, and export a
 %   summary video.
 %
 %   SYNTAX
@@ -11,7 +11,7 @@ function tageditor(annotations, vid, outpath)
 %   DESCRIPTION
 %   tageditor(annotations, vid, outpath) specifies the annotations files to
 %   update, the video handle to the video returned by vidpreproc.m, and the
-%   output directory to update annotations.mat.
+%   output directory to update tag_annotations.mat.
 %
 %   DEPENDENCIES
 %   tagvidgen.m

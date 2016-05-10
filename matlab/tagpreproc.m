@@ -41,10 +41,10 @@ for i = 1:c
     
     % denoising parameters
     sorh = 'h';
-    thrSettings =  repmat(14.5, [3 5]);
+    thrSettings = repmat(14.5, [3 5]);
 
     % decompose using SWT2
-    wDEC = swt2(double(tmp),level,wname);
+    wDEC = swt2(double(tmp), level, wname);
 
     % denoise
     permDir = [1 3 2];
@@ -57,20 +57,20 @@ for i = 1:c
     end
 
     % reconstruct the denoise signal
-    tmp = iswt2(wDEC,wname);
+    tmp = iswt2(wDEC, wname);
     
     % remove pad
     tmp = tmp(pads(1)+1:end-pads(2),pads(3)+1:end-pads(4));
     
     % background subtract
-    tmp = 255-tmp;
+    tmp = 255-uint8(tmp);
 
     % pad image
     wpad = 2*RBR;
     tmp = padarray(tmp, [wpad wpad], 255);
     
     % define background
-    background = imopen(tmp,offsetstrel('ball',RBR,RBR));
+    background = imopen(tmp, offsetstrel('ball', RBR, RBR));
     
     % remove background
     tmp = tmp-background;

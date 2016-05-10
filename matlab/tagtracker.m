@@ -10,7 +10,7 @@ function [ annotations ] = tagtracker(annotations, outpath)
 %   DESCRIPTION
 %   [ annotations ] = tagtracker(annotations, outpath) defines tag tracks
 %   in the specified annotations array structure and updates
-%   annotations.mat in the specified outpath.
+%   tag_annotations.mat in the specified outpath.
 %
 %   AUTHOR
 %   Blair J. Rossetti

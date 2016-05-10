@@ -35,8 +35,8 @@ function queenbee(filepath, varargin)
 %   Directory where pipeline data will be written. A preprocessed video,
 %   background image, and tag directory will be storied in the specified
 %   output directory. The tag directory will contain the individual tag
-%   images and the annotation.mat file. By default, the output directory
-%   path is set to the directory containing video specified by filename.
+%   images and the tag_annotations.mat file. By default, the output path
+%   is set to the directory containing video specified by filename.
 %   Data Types: char
 %
 %   'Force' - run all pipeline steps
