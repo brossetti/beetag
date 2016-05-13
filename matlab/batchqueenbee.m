@@ -14,6 +14,9 @@ parfor i = 1:length(files)
        rdir = fullfile(path, [name '_results']);
        mkdir(rdir);
        
+       % print current file
+       fprintf('Processing %s\n', files{i});
+       
        % run queenbee
        queenbee(files{i}, 30, 30, 'Output', rdir, 'Editor', false, 'Force', true, 'Quiet', true);
    catch
