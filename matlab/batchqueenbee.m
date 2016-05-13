@@ -10,19 +10,23 @@ disp('starting video processing...');
 
 % loop through files
 parfor i = 1:length(files)
+   % print current file
+   fprintf('Processing %s\n', files{i});
    try
        % create a directory for results
        [path, name, ~] = fileparts(files{i});
        rdir = fullfile(path, [name '_results']);
        mkdir(rdir);
        
-       % print current file
-       fprintf('Processing %s\n', files{i});
-       
        % run queenbee
        queenbee(files{i}, 30, 30, 'Output', rdir, 'Editor', false, 'Force', true, 'Quiet', true);
    catch
        fprintf('%s failed\n', files{i});
+       err = lasterror;
+       disp(err);
+       disp(err.message);
+       disp(err.stack);
+       disp(err.identifier);
    end
 end
 end
