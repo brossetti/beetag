@@ -152,7 +152,12 @@ while hasFrame(vid)
     numFrames = numFrames + 1;
 end %while
 
-% save tag annotations
-save(fullfile(outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+% check if tags were detected
+if exist('annotations', 'var')
+    % save tag annotations
+    save(fullfile(outpath, 'tags', 'tag_annotations.mat'), 'annotations');
+else
+    annotations = false;
+end
 
 end %function

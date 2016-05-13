@@ -55,6 +55,12 @@ function queenbee(filepath, varargin)
 %   function in headless mode.
 %   Data Types: boolean
 %
+%   'Quiet' - suppress console output
+%   false (default) | true
+%   Suppresses all non-error output text to the console. Set this value to 
+%   true when running this function in batch mode.
+%   Data Types: boolean
+%
 %   DEPENDENCIES
 %   vidpreproc.m, tagextract.m, extractregion.m, tagocr.m, tagpreproc.m,
 %   multipad.m, tagtracker.m, tageditor.m, tagvidgen.m, classifer.mat,
@@ -73,6 +79,7 @@ defaultStime = 0;
 defaultEtime = 0;
 defaultForce = false;
 defaultEditor = true;
+defaultQuiet = false;
 
 % set input types
 addRequired(p,'filepath', @(x) exist(char(x), 'file') == 2);
@@ -81,6 +88,7 @@ addOptional(p,'etime', defaultEtime, @isnumeric);
 addParameter(p,'Output', [], @(x) exist(char(x), 'file') == 7);
 addParameter(p,'Force', defaultForce, @islogical);
 addParameter(p,'Editor', defaultEditor, @islogical);
+addParameter(p,'Quiet', defaultQuiet, @islogical);
 
 % parse and assign variables
 parse(p, filepath, varargin{:});
@@ -90,6 +98,7 @@ etime = p.Results.etime;
 outpath = p.Results.Output;
 force = p.Results.Force;
 editor = p.Results.Editor;
+quiet = p.Results.Quiet;
 
 % check/assign output path
 if isempty(p.Results.Output)
@@ -115,65 +124,103 @@ end
 ppvidpath = fullfile(outpath, [name '_preprocessed.mj2']);
 backgroundpath = fullfile(outpath, [name '_background.png']);
 if exist(ppvidpath, 'file') && exist(backgroundpath, 'file') && ~force
-    disp('Preprocessed video and background image exist');
-    disp('- getting video handle...');
+    if ~quiet
+        disp('Preprocessed video and background image exist');
+        disp('- getting video handle...');
+    end
     ppvid = VideoReader(ppvidpath);
     
-    disp('- getting background image...');
+    if ~quiet
+        disp('- getting background image...');
+    end
     background = imread(backgroundpath);
 elseif exist(backgroundpath, 'file') && ~force
-    disp('No preprocessed video, but background image exist');
-    disp('- getting background image...');
+    if ~quiet
+        disp('No preprocessed video, but background image exist');
+        disp('- getting background image...');
+    end
     background = imread(backgroundpath);
     
-    disp('- checking if dimensions match...');
+    if ~quiet
+        disp('- checking if dimensions match...');
+    end
     if size(background, 1) == vid.Height
-        disp('- using raw video...');
+        if ~quiet
+            disp('- using raw video...');
+        end
         ppvid = vid;
     else
-        disp('- preprocessing video and regenerating background image...');
+        if ~quiet
+            disp('- preprocessing video and regenerating background image...');
+        end
         [ppvid, background] = vidpreproc(vid, etime, outpath);
     end
 else    
-    disp('Preprocessing video and generating background image...');
+    if ~quiet
+        disp('Preprocessing video and generating background image...');
+    end
     [ppvid, background] = vidpreproc(vid, etime, outpath);
 end
 
 %% Detect Tags
 tapath = fullfile(outpath,'tags', 'tag_annotations.mat');
 if exist(tapath, 'file') && ~force
-    disp('Tag images exist');
-    disp('- getting annotation file...');
+    if ~quiet
+        disp('Tag images exist');
+        disp('- getting annotation file...');
+    end
     load(tapath);
 else
-    disp('Detecting tags...');
+    if ~quiet
+        disp('Detecting tags...');
+    end
     annotations = tagextract(ppvid, background, outpath);
+end
+
+if ~annotations
+    if ~quiet
+        disp('No tags detected');
+        disp('DONE');
+    end
+    return
 end
 
 %% Read Tags
 if isfield(annotations, 'digits') && ~force
-    disp('OCR data exists');
-    disp('- skipping process...');
+    if ~quiet
+        disp('OCR data exists');
+        disp('- skipping process...');
+    end
 else
-    disp('Reading tags...');
+    if ~quiet
+        disp('Reading tags...');
+    end
     annotations = tagocr(annotations, outpath);
 end
 
 %% Define Track
 if isfield(annotations, 'trackid') && ~force
-    disp('Tracks exist');
-    disp('- skipping process')
+    if ~quiet
+        disp('Tracks exist');
+        disp('- skipping process')
+    end
 else
-    disp('Defining tracks...');
+    if ~quiet
+        disp('Defining tracks...');
+    end
     annotations = tagtracker(annotations, outpath);
 end
 
 %% Tag Editor
 if editor
-    disp('Starting tag editor...');
+    if ~quiet
+        disp('Starting tag editor...');
+    end
     tageditor(annotations, ppvid, outpath);
 else
-    disp('Done');
+    if ~quiet
+        disp('Done');
+    end
 end
 
 end %function
