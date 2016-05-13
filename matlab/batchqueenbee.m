@@ -3,8 +3,10 @@ function batchqueenbee(d, ext)
 % subdirectory
 
 % get all avi files
+disp('getting file list...');
 files = dirwalk(d);
 files = files(~cellfun(@isempty,regexp(files,[ext '$'])));
+disp('starting video processing...');
 
 % loop through files
 parfor i = 1:length(files)
