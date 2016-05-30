@@ -9,7 +9,7 @@ files = files(~cellfun(@isempty,regexp(files,[ext '$'])));
 disp('starting video processing...');
 
 % loop through files
-for i = 1:length(files)
+parfor i = 1:length(files)
    % print current file
    fprintf('Processing %s\n', files{i});
    try
