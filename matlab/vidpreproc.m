@@ -77,14 +77,14 @@ stats = regionprops(mask,'Area', 'BoundingBox');
 bbox = round(stats(idx).BoundingBox);
 
 % extract active region
-if bbox(4)/size(varImg,1) > 0.05 && bbox(4)/size(varImg,1) < 0.99
+if bbox(4)/size(varImg,1) > 0.05 && bbox(4)/size(varImg,1) < 0.99 && bbox(2) < size(varImg,1)/3
     % create preprocessed video
     ppvidpath = fullfile(outpath,[name '_preprocessed.mj2']);
     ppvid = VideoWriter(ppvidpath,'Archival');
     open(ppvid)
     while hasFrame(vid) && vid.CurrentTime <= etime
         frame = readFrame(vid);
-        writeVideo(ppvid, frame(bbox(2):bbox(4),:,:))
+        writeVideo(ppvid, frame(bbox(2):bbox(2)+bbox(4)-1,:,:))
     end
     close(ppvid)
 
