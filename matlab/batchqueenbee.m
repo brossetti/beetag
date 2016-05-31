@@ -1,6 +1,19 @@
-function batchqueenbee(d, ext)
+function batchqueenbee(d, ext, varargin)
 % This function runs queenbee for all avi files in a given directory or 
 % subdirectory
+
+% check input arguments
+switch nargin
+    case 4
+        b = varargin{1};
+        bnum = varargin{2};
+    case 3
+        b = varargin{1};
+        bnum = 1;
+    otherwise
+        b = 1;
+        bnum = 1;
+end
 
 % get all avi files
 disp('getting file list...');
@@ -8,8 +21,15 @@ files = dirwalk(d);
 files = files(~cellfun(@isempty,regexp(files,[ext '$'])));
 disp('starting video processing...');
 
+% define batch sequence
+numfiles = length(files);
+seq = 1:numfiles;
+bs = numfiles/b;
+idx = seq(seq > (bs*(bnum-1)) & seq <= (bs*bnum));
+batch = seq(idx);
+
 % loop through files
-for i = 1:length(files)
+parfor i = batch
    % print current file
    fprintf('Processing %s\n', files{i});
    try

@@ -177,7 +177,7 @@ else
     annotations = tagextract(ppvid, background, outpath);
 end
 
-if ~annotations
+if ~exist('annotations', 'var')
     if ~quiet
         disp('No tags detected');
         disp('DONE');
