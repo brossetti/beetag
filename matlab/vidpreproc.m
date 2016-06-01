@@ -92,7 +92,7 @@ if bbox(4)/size(varImg,1) > 0.05 && bbox(4)/size(varImg,1) < 0.99 && bbox(2) < s
     vid.CurrentTime = stime;
 
     % define background image
-    background = uint8(meanImg(bbox(2):bbox(4),:,:));
+    background = uint8(meanImg(bbox(2):bbox(2)+bbox(4)-1,:,:));
     imwrite(background, fullfile(outpath,[name '_background.png']));
    
     % get preprocessed video handle
