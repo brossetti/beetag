@@ -80,6 +80,7 @@ defaultEtime = 0;
 defaultForce = false;
 defaultEditor = true;
 defaultQuiet = false;
+defaultBigData = false;
 
 % set input types
 addRequired(p,'filepath', @(x) exist(char(x), 'file') == 2);
@@ -89,6 +90,7 @@ addParameter(p,'Output', [], @(x) exist(char(x), 'file') == 7);
 addParameter(p,'Force', defaultForce, @islogical);
 addParameter(p,'Editor', defaultEditor, @islogical);
 addParameter(p,'Quiet', defaultQuiet, @islogical);
+addParameter(p,'BigData', defaultBigData, @islogical);
 
 % parse and assign variables
 parse(p, filepath, varargin{:});
@@ -99,6 +101,7 @@ outpath = p.Results.Output;
 force = p.Results.Force;
 editor = p.Results.Editor;
 quiet = p.Results.Quiet;
+bigdata = p.Results.BigData;
 
 % check/assign output path
 if isempty(p.Results.Output)
@@ -117,7 +120,8 @@ etime = vid.Duration - etime;
 
 % check times
 if stime > etime
-    error('start time must be before end time')
+    warning('start time must be before end time');
+    return
 end
 
 %% Preprocess Video
@@ -153,13 +157,13 @@ elseif exist(backgroundpath, 'file') && ~force
         if ~quiet
             disp('- preprocessing video and regenerating background image...');
         end
-        [ppvid, background] = vidpreproc(vid, etime, outpath);
+        [ppvid, background] = vidpreproc(vid, etime, outpath, ~bigdata);
     end
 else    
     if ~quiet
         disp('Preprocessing video and generating background image...');
     end
-    [ppvid, background] = vidpreproc(vid, etime, outpath);
+    [ppvid, background] = vidpreproc(vid, etime, outpath, ~bigdata);
 end
 
 %% Detect Tags
@@ -177,7 +181,7 @@ else
     annotations = tagextract(ppvid, background, outpath);
 end
 
-if ~exist('annotations', 'var')
+if ~isstruct(annotations)
     if ~quiet
         disp('No tags detected');
         disp('DONE');

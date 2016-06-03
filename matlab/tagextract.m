@@ -128,7 +128,7 @@ while hasFrame(vid)
             end
             
             % save tag
-            filename = sprintf('%s_tag%06d.tif', vidName, numTags);
+            filename = sprintf('%s_tag%06d.png', vidName, numTags);
             filepath = fullfile(outpath, 'tags', filename);
             imwrite(tag, filepath);
             

@@ -39,7 +39,8 @@ parfor i = batch
        mkdir(rdir);
        
        % run queenbee
-       queenbee(files{i}, 30, 30, 'Output', rdir, 'Editor', false, 'Force', true, 'Quiet', true);
+       queenbee(files{i}, 30, 30, 'Output', rdir, 'Editor', false, ...
+           'Force', true, 'Quiet', true, 'BigData', true);
    catch
        fprintf('%s failed\n', files{i});
        err = lasterror;
