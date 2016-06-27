@@ -316,12 +316,12 @@ end %apply_Callback
 function save_Callback(hObject, eventdata)
     % get data
     gdata = guidata(hObject);
-    annotations = gdata.annotations;
     
     % change button color to red
     gdata.hsave.BackgroundColor = [1 0 0];
     
     % save annotation file
+    annotations = gdata.annotations;
     save(fullfile(gdata.outpath, 'tags', 'tag_annotations.mat'), 'annotations');
     
     % set as saved
@@ -329,6 +329,9 @@ function save_Callback(hObject, eventdata)
     
     % revert button color
     gdata.hsave.BackgroundColor = [0.94 0.94 0.94];
+    
+    % reassign guidata
+    guidata(hObject, gdata);
 end %save_Callback
 
 function exportdata_Callback(hObject, eventdata)
