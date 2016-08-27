@@ -1,4 +1,4 @@
-function [ annotations ] = tagextract(vid, background, outpath)
+function [ annotations ] = tagextract(vid, background, rgb, outpath)
 %TAGEXTRACT Detects and extracts bee tags regions from a video
 %   Detects and extracts bee tag regions from a video given a video handle
 %   and background image. A region detector is used to identifiy potential
@@ -9,7 +9,7 @@ function [ annotations ] = tagextract(vid, background, outpath)
 %   tag_annotations.mat files and returned as an array structure.
 %
 %   SYNTAX
-%   [ annotations ] = tagextract(vid, background, outpath)
+%   [ annotations ] = tagextract(vid, background, rgb, outpath)
 %
 %   DESCRIPTION
 %   [ annotations ] = tagextract(vid, background, outpath) searches the
@@ -50,9 +50,14 @@ while hasFrame(vid)
     % get current time
     time = vid.CurrentTime;
     
-    % read frame and remove background
+    % read frame, color filter, and remove background
     frame = readFrame(vid);
-    gframe = imadjust(frame(:,:,3));
+    if isequal(rgb, [0,0,0])
+        gframe = imadjust(rgb2gray(frame));
+    else
+        rgb_hsv = rgb2hsv(rgb);
+        
+    end    
     gframebg = gframe - background;
     
     % detect MSER regions

@@ -1,5 +1,5 @@
-function queenbee(filepath, varargin)
-%QUEENBEE Wrapper function for bee tag processing pipeline
+function main(filepath, varargin)
+%MAIN Wrapper function for bee tag processing pipeline
 %   Main wrapper function for the bee tag processing pipeline. Given the
 %   the path to a video file, this function will perform the following
 %   sequential steps: video preprocessing, tag detection, tag ocr, track
@@ -7,25 +7,25 @@ function queenbee(filepath, varargin)
 %   function that can be called independent of this pipeline.
 %
 %   SYNTAX
-%   queenbee(filename)
-%   queenbee(filename, stime)
-%   queenbee(filename, stime, etime)
-%   queenbee(_, Name, Value)
+%   main(filename)
+%   main(filename, stime)
+%   main(filename, stime, etime)
+%   main(_, Name, Value)
 %   
 %   DESCRIPTION
-%   queenbee(filename) reads the video file specified by filename, and
+%   main(filename) reads the video file specified by filename, and
 %   enters the data into the bee tag processing pipeline.
 %
-%   queenbee(filename, stime) additionally specifies a start time for the
+%   main(filename, stime) additionally specifies a start time for the
 %   video file in seconds. Only the video data after stime will be entered
 %   into the bee tag processing pipeline.
 %
-%   queenbee(filename, stime, etime) additionally specifies an end time for 
+%   main(filename, stime, etime) additionally specifies an end time for 
 %   the video file in seconds. etime is relative to the end of the video
 %   file. Only video data between stime and etime will be entered into the
 %   bee tag processing pipeline.
 %
-%   queenbee(_, Name, Value) specifies format-specific options using one or 
+%   main(_, Name, Value) specifies format-specific options using one or 
 %   more name-value pair arguments, in addition to any of the input 
 %   arguments in the previous syntaxes.
 %
@@ -70,7 +70,7 @@ function queenbee(filepath, varargin)
 %   Blair J. Rossetti
 %
 %   DATE LAST MODIFIED
-%   2016-05-10
+%   2016-08-25
 
 %% Parse Input
 % set defaults
@@ -80,7 +80,9 @@ defaultEtime = 0;
 defaultForce = false;
 defaultEditor = true;
 defaultQuiet = false;
-defaultBigData = false;
+defaultARC = false;
+defaultRGBFilter = uint8[0,0,0];
+defaultModule = 0;
 
 % set input types
 addRequired(p,'filepath', @(x) exist(char(x), 'file') == 2);
@@ -90,7 +92,9 @@ addParameter(p,'Output', [], @(x) exist(char(x), 'file') == 7);
 addParameter(p,'Force', defaultForce, @islogical);
 addParameter(p,'Editor', defaultEditor, @islogical);
 addParameter(p,'Quiet', defaultQuiet, @islogical);
-addParameter(p,'BigData', defaultBigData, @islogical);
+addParameter(p,'ARC', defaultARC, @islogical);
+addParameter(p, 'RGBFilter', defaultRGBFilter, @(x) length(x) == 3 && isa(x,'uint8')); 
+addParameter(p, 'Module', defaultModule, @(x) any(x == 0:4));
 
 % parse and assign variables
 parse(p, filepath, varargin{:});
@@ -101,7 +105,9 @@ outpath = p.Results.Output;
 force = p.Results.Force;
 editor = p.Results.Editor;
 quiet = p.Results.Quiet;
-bigdata = p.Results.BigData;
+arc = p.Results.ARC;
+rgb = p.Results.RGBFilter;
+module = p.Results.Module;
 
 % check/assign output path
 if isempty(p.Results.Output)
@@ -125,6 +131,10 @@ if stime > etime
 end
 
 %% Preprocess Video
+if module > 1
+    force = false;
+end
+
 ppvidpath = fullfile(outpath, [name '_preprocessed.mj2']);
 backgroundpath = fullfile(outpath, [name '_background.png']);
 if exist(ppvidpath, 'file') && exist(backgroundpath, 'file') && ~force
@@ -157,16 +167,24 @@ elseif exist(backgroundpath, 'file') && ~force
         if ~quiet
             disp('- preprocessing video and regenerating background image...');
         end
-        [ppvid, background] = vidpreproc(vid, etime, outpath, ~bigdata);
+        [ppvid, background] = vidpreproc(vid, etime, outpath, ~arc);
     end
 else    
     if ~quiet
         disp('Preprocessing video and generating background image...');
     end
-    [ppvid, background] = vidpreproc(vid, etime, outpath, ~bigdata);
+    [ppvid, background] = vidpreproc(vid, etime, outpath, ~arc);
+end
+
+if module == 1
+    return
 end
 
 %% Detect Tags
+if module > 2
+    force = false;
+end
+
 tapath = fullfile(outpath,'tags', 'tag_annotations.mat');
 if exist(tapath, 'file') && ~force
     if ~quiet
@@ -178,7 +196,7 @@ else
     if ~quiet
         disp('Detecting tags...');
     end
-    annotations = tagextract(ppvid, background, outpath);
+    annotations = tagextract(ppvid, background, rgb, outpath);
 end
 
 if ~isstruct(annotations)
@@ -189,7 +207,15 @@ if ~isstruct(annotations)
     return
 end
 
+if module == 2
+    return
+end
+
 %% Read Tags
+if module > 3
+    force = false;
+end
+
 if isfield(annotations, 'digits') && ~force
     if ~quiet
         disp('OCR data exists');
@@ -202,7 +228,15 @@ else
     annotations = tagocr(annotations, outpath);
 end
 
+if module == 3
+    return
+end
+
 %% Define Track
+if module > 4
+    force = false;
+end
+
 if isfield(annotations, 'trackid') && ~force
     if ~quiet
         disp('Tracks exist');
@@ -213,6 +247,10 @@ else
         disp('Defining tracks...');
     end
     annotations = tagtracker(annotations, outpath);
+end
+
+if module == 4
+    return
 end
 
 %% Tag Editor
