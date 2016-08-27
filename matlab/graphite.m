@@ -85,7 +85,8 @@ htracks = uicontrol(pbuttons, 'Style', 'pushbutton', 'String', 'Assemble Tracks'
           'Units', 'normalized', 'Position', [0.01, 2/6+0.005, 0.98, 1/6-0.01], ...
           'Tag', 'assemble', 'Callback', @run_Callback);
 hedit = uicontrol(pbuttons, 'Style', 'pushbutton', 'String', 'Edit', ...
-        'Units', 'normalized', 'Position', [0.01, 1/6+0.005, 0.98, 1/6-0.01]);
+        'Units', 'normalized', 'Position', [0.01, 1/6+0.005, 0.98, 1/6-0.01], ...
+        'Tag', 'edit', 'Callback', @run_Callback);
 hrunall = uicontrol(pbuttons, 'Style', 'pushbutton', 'String', 'Run All', ...
           'Units', 'normalized', 'Position', [0.01, 0.01, 0.98, 1/6-0.015], ...
           'Tag', 'runall', 'Callback', @run_Callback);
@@ -573,6 +574,8 @@ function run_Callback(hObject, eventdata)
             module = 3;
         case 'assemble'
             module = 4;
+        case 'edit'
+            module = 5;
         otherwise
             module = 0;
     end
@@ -584,17 +587,33 @@ function run_Callback(hObject, eventdata)
     end
     
     % set color filtering status
-    if gdata.hcfilton
+    if gdata.cfilt
         rgb = gdata.rgb;
     else
         rgb = uint8([0,0,0]);
     end
     
-    % call main wrapper for each file in filedata
-    for i = 1:size(gdata.filedata, 1)
+    % set editor status
+    if module == 5
+        edit = true;
+    else
+        edit = gdata.edit;
+    end
+    
+    % process each file
+    for i = 1:size(filedata, 1)
+        % create output directory
+        [~,name,~] = fileparts(filedata{i,1});
+        outdir = fullfile(filedata{i,5}, name);
+        if ~exist(outdir, 'dir')
+            mkdir(outdir);
+        end
+        
+        %call main 
+        disp(['PROCESSING: ' filedata{i,1} '...']);
         main(filedata{i,1}, filedata{i,2}, filedata{i,3}, 'ARC', filedata{i,4}, ...
-            'Output', filedata{i,5}, 'RGBFilter', rgb, 'Force', ~gdata.skip, ...
-            'Editor', gdata.edit, 'Module', module);
+            'Output', outdir, 'RGBFilter', rgb, 'Force', ~gdata.skip, ...
+            'Editor', edit, 'Module', module);
     end
 
-end %apply_Callback
+end %run_Callback

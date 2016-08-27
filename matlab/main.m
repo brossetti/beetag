@@ -81,7 +81,7 @@ defaultForce = false;
 defaultEditor = true;
 defaultQuiet = false;
 defaultARC = false;
-defaultRGBFilter = uint8[0,0,0];
+defaultRGBFilter = uint8([0,0,0]);
 defaultModule = 0;
 
 % set input types
@@ -94,7 +94,7 @@ addParameter(p,'Editor', defaultEditor, @islogical);
 addParameter(p,'Quiet', defaultQuiet, @islogical);
 addParameter(p,'ARC', defaultARC, @islogical);
 addParameter(p, 'RGBFilter', defaultRGBFilter, @(x) length(x) == 3 && isa(x,'uint8')); 
-addParameter(p, 'Module', defaultModule, @(x) any(x == 0:4));
+addParameter(p, 'Module', defaultModule, @(x) any(x == 0:5));
 
 % parse and assign variables
 parse(p, filepath, varargin{:});
@@ -132,6 +132,7 @@ end
 
 %% Preprocess Video
 if module > 1
+    forcetmp = force;
     force = false;
 end
 
@@ -167,21 +168,24 @@ elseif exist(backgroundpath, 'file') && ~force
         if ~quiet
             disp('- preprocessing video and regenerating background image...');
         end
-        [ppvid, background] = vidpreproc(vid, etime, outpath, ~arc);
+        [ppvid, background] = vidpreproc(vid, etime, outpath, arc);
     end
 else    
     if ~quiet
         disp('Preprocessing video and generating background image...');
     end
-    [ppvid, background] = vidpreproc(vid, etime, outpath, ~arc);
+    [ppvid, background] = vidpreproc(vid, etime, outpath, arc);
 end
 
 if module == 1
     return
+else
+    force = forcetmp;
 end
 
 %% Detect Tags
 if module > 2
+    forcetmp = force;
     force = false;
 end
 
@@ -209,10 +213,13 @@ end
 
 if module == 2
     return
+else
+    force = forcetmp;
 end
 
 %% Read Tags
 if module > 3
+    forcetmp = force;
     force = false;
 end
 
@@ -230,6 +237,8 @@ end
 
 if module == 3
     return
+else
+    force = forcetmp;
 end
 
 %% Define Track

@@ -56,7 +56,11 @@ while hasFrame(vid)
         gframe = imadjust(rgb2gray(frame));
     else
         rgb_hsv = rgb2hsv(rgb);
-        
+        hues = [rgb_hsv(1)-30, rgb_hsv(1)+30];
+        frame_hsv = rgb2hsv(frame);
+        filtidx = frame_hsv(:,:,1) > hues(1) && frame_hsv(:,:,1) < hues(2);
+        frame_hsv(filtidx, filtidx, 3) = 0;
+        gframe = imadjust(rgb2gray(hsv2rgb(frame_hsv)));
     end    
     gframebg = gframe - background;
     
