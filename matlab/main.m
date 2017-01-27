@@ -1,7 +1,7 @@
 function main(filepath, varargin)
-%MAIN Wrapper function for bee tag processing pipeline
-%   Main wrapper function for the bee tag processing pipeline. Given the
-%   the path to a video file, this function will perform the following
+%MAIN Wrapper function for insect tag processing pipeline
+%   Main wrapper function for the insect tag processing pipeline. Given the
+%   path to a video file, this function will perform the following
 %   sequential steps: video preprocessing, tag detection, tag ocr, track
 %   assignment, and open a tag editor. Each step is performed by a separate
 %   function that can be called independent of this pipeline.
@@ -14,7 +14,7 @@ function main(filepath, varargin)
 %   
 %   DESCRIPTION
 %   main(filename) reads the video file specified by filename, and
-%   enters the data into the bee tag processing pipeline.
+%   enters the data into the insect tag processing pipeline.
 %
 %   main(filename, stime) additionally specifies a start time for the
 %   video file in seconds. Only the video data after stime will be entered
