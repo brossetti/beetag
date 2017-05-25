@@ -237,7 +237,7 @@ function adddir_Callback(hObject, eventdata)
     end  
     
     % get files
-    exts = {'*.avi';'*.mj2';'*.mpg';'*.wmv';'*.mp4';'*.m4v';'*.mov'};
+    exts = {'*.avi';'*.AVI';'*.mj2';'*.MJ2';'*.mpg';'*.MPG';'*.wmv';'*.WMV';'*.mp4';'*.MP4';'*.m4v';'*.M4V';'*.mov';'*.MOV'};
     files = {};
     for i = 1:length(exts)
         filelist = dir(fullfile(rootdir, exts{i}));

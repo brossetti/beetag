@@ -131,8 +131,8 @@ if stime > etime
 end
 
 %% Preprocess Video
+forcetmp = force;
 if module > 1
-    forcetmp = force;
     force = false;
 end
 

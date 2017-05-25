@@ -55,12 +55,14 @@ while hasFrame(vid)
     if isequal(rgb, [0,0,0])
         gframe = imadjust(rgb2gray(frame));
     else
-        rgb_hsv = rgb2hsv(rgb);
-        hues = [rgb_hsv(1)-30, rgb_hsv(1)+30];
+        rgb_hsv = rgb2hsv(double(rgb)/255);
+        hues = [rgb_hsv(1)-(15/360), rgb_hsv(1)+(15/360)];
         frame_hsv = rgb2hsv(frame);
-        filtidx = frame_hsv(:,:,1) > hues(1) && frame_hsv(:,:,1) < hues(2);
-        frame_hsv(filtidx, filtidx, 3) = 0;
-        gframe = imadjust(rgb2gray(hsv2rgb(frame_hsv)));
+        filtidx = frame_hsv(:,:,1) > hues(1) & frame_hsv(:,:,1) < hues(2);
+        [subidxx, subidxy] = meshgrid(1:size(filtidx,2),1:size(filtidx,1));
+        ind = sub2ind(size(frame_hsv), subidxy(filtidx), subidxx(filtidx), 3+zeros(sum(filtidx(:)),1));
+        frame_hsv(ind) = 0;
+        gframe = imadjust(rgb2gray(cast(hsv2rgb(frame_hsv)*255,'uint8')));
     end    
     gframebg = gframe - background;
     
