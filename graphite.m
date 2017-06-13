@@ -601,7 +601,7 @@ function run_Callback(hObject, eventdata)
     end
     
     % process each file
-    for i = 1:size(filedata, 1)
+    parfor i = 1:size(filedata, 1)
         % create output directory
         [~,name,~] = fileparts(filedata{i,1});
         outdir = fullfile(filedata{i,5}, name);
