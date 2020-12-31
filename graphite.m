@@ -1,6 +1,6 @@
 function graphite()
 % GRAPHITE Main interface for GRAPHical Insect Tracking Environment
-%   Allows the manipulation of bee tag annotation files. The GUI provides
+%   Allows the manipulation of tag annotation files. The GUI provides
 %   access to the istag, trackid, and digits fields. The GUI has options to
 %   update the tag_annotations.mat file, export a data file, and export a
 %   summary video.
